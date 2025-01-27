@@ -15,7 +15,7 @@ const handleSideMenu = () => {
             <el-menu default-active="/" class="sidenav" :collapse="isCollapse" :router="true">
                 <el-menu-item index="/">
                     <el-icon><icon-menu /></el-icon>
-                    <template #title> Dashboard </template>
+                    <template #title> About </template>
                 </el-menu-item>
                 <el-menu-item index="/debug">
                     <el-icon>
