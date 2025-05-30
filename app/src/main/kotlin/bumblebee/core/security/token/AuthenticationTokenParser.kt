@@ -16,6 +16,7 @@ class AuthenticationTokenParser(private val config: JWTTokenConfig, private val 
                 .setSigningKey(config.secret)
                 .requireAudience(config.audience)
                 .setAllowedClockSkewSeconds(config.clockSkew)
+                .build()
                 .parseClaimsJws(token)
                 .body
 

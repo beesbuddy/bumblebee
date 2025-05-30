@@ -49,7 +49,7 @@ class App : CliktCommand() {
         val authManager = AuthManagerProvider.initialize(config.securityConfig)
 
         val jwtConfig = JWTTokenConfig()
-        // TODO: late init???
+
         val authenticationTokenService = AuthenticationTokenService(
             config = jwtConfig,
             tokenParser = AuthenticationTokenParser(jwtConfig, authManager),

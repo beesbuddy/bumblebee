@@ -12,13 +12,11 @@ object Versions {
     const val MOCKITO_CORE = "5.5.0"
     const val KOTLIN_LOGGING = "2.0.11"
     const val JAXB = "2.3.1"
-    const val NETTY = "4.1.96.Final"
+    const val NETTY = "4.1.121.Final"
     const val HUTOOL = "5.8.21"
-    const val SLF4J = "1.7.36"
     const val JERSEY = "3.1.3"
-    const val COMMON_CLI = "1.5.0"
     const val FASTJSON = "2.0.9"
-    const val JJWT = "0.9.1"
+    const val JJWT = "0.12.6"
     const val GLASSFISH = "4.0.3"
     const val JBCRYPT = "0.4"
     const val RS_API = "2.1.1"
@@ -60,7 +58,7 @@ dependencies {
     implementation("org.mindrot:jbcrypt:${Versions.JBCRYPT}")
     implementation("io.jsonwebtoken:jjwt:${Versions.JJWT}")
 
-    implementation("org.glassfish.jersey.connectors:jersey-netty-connector:${Versions.JERSEY}")
+//    implementation("org.glassfish.jersey.connectors:jersey-netty-connector:${Versions.JERSEY}")
     implementation("org.glassfish.jaxb:jaxb-runtime:${Versions.GLASSFISH}")
     implementation("org.glassfish.jersey.core:jersey-server:${Versions.JERSEY}")
     implementation("org.glassfish.jersey.containers:jersey-container-servlet:${Versions.JERSEY}")
@@ -83,6 +81,9 @@ dependencies {
     implementation("org.jdbi:jdbi3-kotlin-sqlobject:${Versions.JDBI3}")
     implementation("org.jdbi:jdbi3-jackson2:${Versions.JDBI3}")
     implementation("com.h2database:h2:${Versions.H2}")
+
+    implementation("org.xerial:sqlite-jdbc:3.49.1.0")
+    implementation("org.jooq:jooq:3.20.4")
 
     implementation(kotlin("reflect"))
 
