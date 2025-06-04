@@ -74,7 +74,7 @@ class HttpServer(
             if (port > Constants.INT_ZERO) {
                 serverBootstrap.bind(host, port).sync().channel().closeFuture().addListener { stop() }
 
-                log.info("Server started. Open your web browser and navigate to {}:{}/", host, port)
+                log.info("Server started. Open your web browser and navigate to http://{}:{}/", host, port)
             } else {
                 log.info("Port is not configured. Gracefully shutdown http server without binding it.")
 
