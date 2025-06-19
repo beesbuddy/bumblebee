@@ -6,6 +6,7 @@ import jakarta.ws.rs.ext.ExceptionMapper
 import jakarta.ws.rs.ext.Provider
 
 
+@Suppress("UNUSED_PARAMETER")
 @Provider
 class NotFoundExceptionMapper : ExceptionMapper<NotFoundException> {
     override fun toResponse(exception: NotFoundException): Response {

@@ -8,6 +8,8 @@ import jakarta.ws.rs.ext.ExceptionMapper
 import jakarta.ws.rs.ext.Provider
 import java.nio.file.AccessDeniedException
 
+
+@Suppress("UNUSED_PARAMETER")
 @Provider
 class AccessDeniedExceptionMapper : ExceptionMapper<AccessDeniedException?> {
     @Context

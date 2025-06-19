@@ -39,7 +39,7 @@ class HttpChannelInitializer(
                 HANDLER_SSL,
                 NettyUtil.buildSslHandler(
                     channel.alloc(),
-                    sslContext!!,
+                    sslContext,
                     enableClientCA
                 )
             )

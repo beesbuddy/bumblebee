@@ -1,7 +1,6 @@
 package bumblebee.http
 
 import bumblebee.core.config.Config
-import bumblebee.core.security.AuthManagerProvider
 import bumblebee.core.security.IAuthManager
 import bumblebee.core.security.token.AuthenticationTokenService
 import bumblebee.core.util.SslContextUtil

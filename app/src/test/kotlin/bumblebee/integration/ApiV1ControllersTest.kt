@@ -1,7 +1,6 @@
-package bumblebee.integration;
+package bumblebee.integration
 
 import bumblebee.core.Constants
-import bumblebee.core.Constants.AUTH_ANONYMOUS
 import bumblebee.core.config.Config
 import bumblebee.core.config.SecurityConfig
 import bumblebee.core.security.*
@@ -66,7 +65,7 @@ object ApiV1ControllersTest {
 
     @AfterEach
     fun cleanUp() {
-        httpServer.stop();
+        httpServer.stop()
     }
 
     @Test

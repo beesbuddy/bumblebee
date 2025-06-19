@@ -82,7 +82,7 @@ class HttpServer(
 
                 close()
             }
-        } catch (e: InterruptedException) {
+        } catch (_: InterruptedException) {
             stop()
         }
     }

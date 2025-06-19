@@ -35,9 +35,9 @@ class InMemoryMessageIdStoreTest {
         val store = InMemoryMessageIdStore()
         val msgIdSet: MutableSet<Int> = ConcurrentHashSet()
 
-        for (i in 0..99) {
+        (0..99).forEach { i ->
             Thread {
-                for (j in 0..599) {
+                (0..599).forEach { j ->
                     val msgId = store.getNextMessageId(CLIENT_ID)
                     println(msgId)
                     val add = msgIdSet.add(msgId)

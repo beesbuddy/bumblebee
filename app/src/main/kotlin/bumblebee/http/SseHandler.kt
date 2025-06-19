@@ -45,7 +45,8 @@ class SseHandler private constructor() : SimpleChannelInboundHandler<FullHttpReq
     companion object {
         internal val INSTANCE = SseHandler()
 
-        private fun handleHealth(ctx: ChannelHandlerContext, _request: FullHttpRequest) {
+        @Suppress("UNUSED_PARAMETER")
+        private fun handleHealth(ctx: ChannelHandlerContext, request: FullHttpRequest) {
             val content = Unpooled.copiedBuffer("OK", CharsetUtil.UTF_8)
             val response = DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1, HttpResponseStatus.OK, content
@@ -87,7 +88,8 @@ class SseHandler private constructor() : SimpleChannelInboundHandler<FullHttpReq
             }, 0, 2, TimeUnit.SECONDS)
         }
 
-        private fun sendNotFound(ctx: ChannelHandlerContext, _request: FullHttpRequest) {
+        @Suppress("UNUSED_PARAMETER")
+        private fun sendNotFound(ctx: ChannelHandlerContext, request: FullHttpRequest) {
             val content = Unpooled.copiedBuffer("404 Not Found", CharsetUtil.UTF_8)
             val response = DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND, content
