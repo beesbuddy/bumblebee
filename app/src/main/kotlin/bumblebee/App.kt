@@ -13,6 +13,9 @@ import bumblebee.http.HttpFactory
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import io.jsonwebtoken.SignatureAlgorithm
+import io.jsonwebtoken.io.Encoders
+import io.jsonwebtoken.security.Keys
 import mu.KotlinLogging
 
 private val log = KotlinLogging.logger {}
@@ -22,7 +25,8 @@ class App : CliktCommand() {
     private val configPath by option("-c", "--config", help = "path to configuration")
     private val passwordToHash by option("-h", "--hash", help = "hash password")
     private val generateAdminToken by option("-t", "--token", help = "generate admin token").flag(default = false)
-    private val enableAdmin by option("-a", "--admin", help = "enable administration").flag(default = false)
+    private val enableDashboard by option("-a", "--admin", help = "enable administration dashboard").flag(default = false)
+    private val generateSecret by option("-s", "--secret", help = "generates secret to be used with jwt token").flag(default = false)
 
     private fun startBroker(config: Config, authManager: IAuthManager, authenticationTokenService: AuthenticationTokenService) {
         val brokerServer = MQTTFactory.createBroker(config, authManager)
@@ -71,9 +75,17 @@ class App : CliktCommand() {
             return
         }
 
+        if (generateSecret) {
+            println("Generating secret for JWT token...")
+            val key = Keys.secretKeyFor(SignatureAlgorithm.HS256)
+            val encoded = Encoders.BASE64.encode(key.encoded)
+            println("Secret for token [$encoded]")
+            return
+        }
+
         startBroker(config, authManager, authenticationTokenService)
 
-        startHttp(config, authManager, authenticationTokenService, enableAdmin)
+        startHttp(config, authManager, authenticationTokenService, enableDashboard)
     }
 }
 
