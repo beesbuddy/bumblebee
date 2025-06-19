@@ -57,7 +57,10 @@ object ApiV1ControllersTest {
         )
 
         httpServer =
-            HttpFactory.createServer(config, authManager, authenticationTokenService = authenticationTokenService)
+            HttpFactory.createServer(
+                config, authManager, authenticationTokenService = authenticationTokenService,
+                enableAdmin = true
+            )
         httpServer.start()
     }
 

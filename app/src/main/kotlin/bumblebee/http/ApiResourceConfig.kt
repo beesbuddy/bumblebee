@@ -4,8 +4,6 @@ import bumblebee.core.config.Config
 import bumblebee.core.security.AuthManagerProvider
 import bumblebee.core.security.IAuthManager
 import bumblebee.core.security.token.AuthenticationTokenService
-import bumblebee.http.api.v1.filter.AuthenticationFilter
-import bumblebee.http.api.v1.filter.AuthorizationFilter
 import org.glassfish.hk2.utilities.binding.AbstractBinder
 import org.glassfish.jersey.jackson.JacksonFeature
 import org.glassfish.jersey.logging.LoggingFeature
@@ -32,8 +30,6 @@ class ApiResourceConfig(
         register(JacksonFeature::class.java)
         register(LoggingFeature::class.java)
         register(MultiPartFeature::class.java)
-//        register(AuthenticationFilter::class.java)
-//        register(AuthorizationFilter::class.java)
 
         // Controllers, mappers, filters auto configuration
         packages(true, "bumblebee.http.api.v1.filter")

@@ -26,6 +26,7 @@ class HttpServer(
     sslContext: SslContext? = null,
     pipelineConfigurator: Consumer<ChannelPipeline>? = null,
     enableClientCA: Boolean = false,
+    enableAdmin: Boolean = false,
 ) {
     private val host: String
     private val port: Int
@@ -65,6 +66,7 @@ class HttpServer(
                     sslContext = sslContext,
                     pipelineConfigurator = pipelineConfigurator,
                     enableClientCA = enableClientCA,
+                    enableAdmin = enableAdmin,
                 )
             )
     }

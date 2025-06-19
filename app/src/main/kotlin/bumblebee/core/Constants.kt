@@ -5,6 +5,7 @@ object Constants {
     const val SUPER_USERNAME = "bumblebee"
 
     const val API_V1_PATH = "/api/v1"
+    const val SSE_PATH = "/sse"
 
     const val TOKEN_NAME = "Bearer "
 
@@ -40,7 +41,7 @@ object Constants {
     const val MASTER_NODE_NAME = "master"
 
     const val HANDLER_HTTP_SERVER_CODEC = "httpServerCodec"
-    const val HANDLER_HTTPS = "ssl"
+    const val HANDLER_HTTPS = "https"
     const val HANDLER_HTTP_OBJECT_AGGREGATOR = "httpObjectAggregator"
     const val HANDLER_IDLE_STATE = "idleStateHandler"
     const val HANDLER_MQTT_ENCODER = "mqttEncoderHandler"

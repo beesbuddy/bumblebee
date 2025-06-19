@@ -66,7 +66,7 @@ class HttpServerHandler(container: NettyHttpContainer, private val useSsl: Boole
             if (contentLength >= Constants.MAX_REQUEST_ENTITY_BYTES) {
                 requestContext.abortWith(Response.status(Response.Status.REQUEST_ENTITY_TOO_LARGE).build())
             }
-            val containerResponse = getApplicationHandler()
+            val containerResponse = applicationHandler
                 .apply(requestContext, ByteBufOutputStream(buffer))
                 .get()
             response = sendResponse(containerResponse, buffer)

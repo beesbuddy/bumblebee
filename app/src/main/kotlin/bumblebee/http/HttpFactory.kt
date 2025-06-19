@@ -7,7 +7,7 @@ import bumblebee.core.security.token.AuthenticationTokenService
 import bumblebee.core.util.SslContextUtil
 
 object HttpFactory {
-    fun createServer(config: Config, authManager: IAuthManager, authenticationTokenService: AuthenticationTokenService): HttpServer {
+    fun createServer(config: Config, authManager: IAuthManager, authenticationTokenService: AuthenticationTokenService, enableAdmin: Boolean): HttpServer {
         val enableClientCA = config.sslContextConfig?.enableClientCA ?: false
         val sslContext = SslContextUtil.createSslContext(
             config = config.sslContextConfig,
@@ -20,6 +20,7 @@ object HttpFactory {
             app = app,
             sslContext = sslContext,
             enableClientCA = enableClientCA,
+            enableAdmin = enableAdmin
         )
     }
 }

@@ -44,6 +44,7 @@ class UIPageHandler private constructor() : SimpleChannelInboundHandler<FullHttp
 
         private fun forward(request: FullHttpRequest): Boolean {
             return request.uri().contains(Constants.API_V1_PATH) ||
+                    request.uri().contains(Constants.SSE_PATH) ||
                     request.headers().contains(HttpHeaderNames.UPGRADE, HttpHeaderValues.WEBSOCKET, true)
         }
 

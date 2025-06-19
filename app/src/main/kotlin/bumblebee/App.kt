@@ -29,8 +29,8 @@ class App : CliktCommand() {
         brokerServer.start()
     }
 
-    private fun startHttp(config: Config, authManager: IAuthManager, authenticationTokenService: AuthenticationTokenService) {
-        val httpServer = HttpFactory.createServer(config, authManager, authenticationTokenService)
+    private fun startHttp(config: Config, authManager: IAuthManager, authenticationTokenService: AuthenticationTokenService, enableAdmin: Boolean) {
+        val httpServer = HttpFactory.createServer(config, authManager, authenticationTokenService, enableAdmin)
         httpServer.start()
     }
 
@@ -73,9 +73,7 @@ class App : CliktCommand() {
 
         startBroker(config, authManager, authenticationTokenService)
 
-        if (enableAdmin) {
-            startHttp(config, authManager, authenticationTokenService)
-        }
+        startHttp(config, authManager, authenticationTokenService, enableAdmin)
     }
 }
 

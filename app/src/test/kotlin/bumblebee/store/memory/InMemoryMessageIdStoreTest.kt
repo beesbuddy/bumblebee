@@ -14,7 +14,7 @@ class InMemoryMessageIdStoreTest {
     fun nextMessageId_WhenGeneratingNextMessageId_ThenLimitShouldNotBeOverstepped() {
         val store = InMemoryMessageIdStore()
 
-        for (i in 0..99999) {
+        (0..99999).forEach { i ->
             val nextMessageId = store.getNextMessageId(CLIENT_ID)
             println(nextMessageId)
 
