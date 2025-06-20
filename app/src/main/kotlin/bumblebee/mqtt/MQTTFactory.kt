@@ -3,6 +3,7 @@ package bumblebee.mqtt
 import bumblebee.core.Constants
 import bumblebee.core.MqttMessagesDispatcher
 import bumblebee.core.config.Config
+import bumblebee.core.inner.traffic.IInnerTraffic
 import bumblebee.core.inner.traffic.NoopInnerTraffic
 import bumblebee.core.worker.EventsWorkersExecutor
 import bumblebee.core.worker.IEventsWorker
@@ -13,7 +14,7 @@ import bumblebee.core.util.SslContextUtil
 
 
 object MQTTFactory {
-    fun createBroker(config: Config, authManager: IAuthManager): MQTTServer {
+    fun createBroker(config: Config, authManager: IAuthManager, innerTraffic: IInnerTraffic): MQTTServer {
         val mqttStore = MqttStoreProvider.initialize(config)
 
         val sslContext = SslContextUtil.createSslContext(
@@ -26,9 +27,6 @@ object MQTTFactory {
             workerConfig = config.workerConfig
         )
         val eventsWorkersExecutor = eventsListeners?.let { EventsWorkersExecutor(it) }
-
-        val nodeName = config.mqttConfig.nodeName ?: Constants.MASTER_NODE_NAME
-        val innerTraffic = NoopInnerTraffic(nodeName)
 
         val connectEventProcessor = ConnectEventProcessor(
             store = mqttStore,
@@ -50,7 +48,7 @@ object MQTTFactory {
         val publishEventProcessor = PublishEventProcessor(
             store = mqttStore,
             eventsWorkersExecutor = eventsWorkersExecutor,
-            nodeName = nodeName,
+            nodeName = config.mqttConfig.nodeName ?: Constants.MASTER_NODE_NAME,
             authManager = authManager,
             innerTraffic = innerTraffic,
         )

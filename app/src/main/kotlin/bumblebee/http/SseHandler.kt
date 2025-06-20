@@ -1,11 +1,13 @@
 package bumblebee.http
 
 import bumblebee.core.Constants
+import bumblebee.core.MqttMessagesDispatcher
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
+import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
 import mu.KotlinLogging
@@ -55,6 +57,9 @@ class SseHandler private constructor() : SimpleChannelInboundHandler<FullHttpReq
                 headers().setInt(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
             }
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE)
+        }
+
+        private fun handleSysTopic(ctx: ChannelHandlerContext, request: FullHttpRequest) {
         }
 
         private fun handleTimestamp(ctx: ChannelHandlerContext, request: FullHttpRequest) {

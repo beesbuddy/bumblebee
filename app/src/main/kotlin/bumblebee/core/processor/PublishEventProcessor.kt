@@ -4,10 +4,7 @@ import bumblebee.core.client.ClientSession
 import bumblebee.core.event.message.mqtt.CommonPublishMessage
 import bumblebee.core.event.message.mqtt.PublishEventMessage
 import bumblebee.core.inner.traffic.IInnerTraffic
-import bumblebee.core.inner.traffic.NoopInnerTraffic
 import bumblebee.core.security.AccessControl
-import bumblebee.core.worker.EventsWorkersExecutor
-import bumblebee.core.worker.IEventsWorker
 import bumblebee.core.security.IAuthManager
 import bumblebee.core.security.Permission
 import bumblebee.core.store.mqtt.*
@@ -15,10 +12,13 @@ import bumblebee.core.subscription.Subscription
 import bumblebee.core.util.MessageUtil
 import bumblebee.core.util.NettyUtil
 import bumblebee.core.util.Stopwatch
+import bumblebee.core.worker.EventsWorkersExecutor
+import bumblebee.core.worker.IEventsWorker
 import cn.hutool.core.collection.CollUtil
 import cn.hutool.core.util.StrUtil
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.mqtt.*
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
 private val log = KotlinLogging.logger {}
@@ -28,7 +28,7 @@ class PublishEventProcessor(
     private val store: IStore,
     private val eventsWorkersExecutor: EventsWorkersExecutor?,
     private val nodeName: String,
-    private var innerTraffic: IInnerTraffic = NoopInnerTraffic(nodeName),
+    private var innerTraffic: IInnerTraffic,
     private val authManager: IAuthManager
 ) : IEventProcessor<MqttPublishMessage> {
     override fun process(ctx: ChannelHandlerContext, message: MqttPublishMessage) {
@@ -53,7 +53,9 @@ class PublishEventProcessor(
         }
 
         try {
-            innerTraffic.publish(pubMsg)
+            runBlocking {
+                innerTraffic.publish(pubMsg)
+            }
 
             log.debug(
                 "Publishing message to inner traffic: clientId={}, userName={}, topic={}",

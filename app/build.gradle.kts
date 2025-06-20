@@ -96,6 +96,9 @@ dependencies {
 
     testImplementation("io.rest-assured:rest-assured:${Versions.RESTASSURED}")
     testImplementation("io.rest-assured:kotlin-extensions:${Versions.RESTASSURED}")
+
+    testImplementation("org.mockito:mockito-inline:5.2.0") // for mocking final classes
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 }
 
 java {

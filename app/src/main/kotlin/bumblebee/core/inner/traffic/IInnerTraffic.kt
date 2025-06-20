@@ -4,5 +4,5 @@ import bumblebee.core.event.message.mqtt.CommonPublishMessage
 
 
 interface IInnerTraffic {
-    fun publish(message: CommonPublishMessage?)
+    suspend fun publish(message: CommonPublishMessage?)
 }

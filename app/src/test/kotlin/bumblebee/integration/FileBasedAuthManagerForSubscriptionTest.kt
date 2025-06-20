@@ -5,6 +5,7 @@ import bumblebee.mqtt.MQTTServer
 import bumblebee.core.Constants
 import bumblebee.core.config.Config
 import bumblebee.core.config.SecurityConfig
+import bumblebee.core.inner.traffic.NoopInnerTraffic
 import bumblebee.core.security.*
 import bumblebee.integration.helper.MqttCounter
 import bumblebee.integration.helper.TestMqttClient
@@ -57,7 +58,8 @@ object FileBasedAuthManagerForSubscriptionTest {
 
         broker = MQTTFactory.createBroker(
             config,
-            authManager
+            authManager,
+            innerTraffic = NoopInnerTraffic("test")
         )
         broker.start()
     }

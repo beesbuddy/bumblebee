@@ -3,6 +3,8 @@ package bumblebee
 import bumblebee.mqtt.MQTTFactory
 import bumblebee.core.Constants
 import bumblebee.core.config.Config
+import bumblebee.core.inner.traffic.IInnerTraffic
+import bumblebee.core.inner.traffic.NoopInnerTraffic
 import bumblebee.core.security.*
 import bumblebee.core.security.token.AuthenticationTokenIssuer
 import bumblebee.core.security.token.AuthenticationTokenParser
@@ -28,8 +30,8 @@ class App : CliktCommand() {
     private val enableDashboard by option("-a", "--admin", help = "enable administration dashboard").flag(default = false)
     private val generateSecret by option("-s", "--secret", help = "generates secret to be used with jwt token").flag(default = false)
 
-    private fun startBroker(config: Config, authManager: IAuthManager, authenticationTokenService: AuthenticationTokenService) {
-        val brokerServer = MQTTFactory.createBroker(config, authManager)
+    private fun startBroker(config: Config, authManager: IAuthManager, authenticationTokenService: AuthenticationTokenService, innerTraffic: IInnerTraffic) {
+        val brokerServer = MQTTFactory.createBroker(config, authManager, innerTraffic)
         brokerServer.start()
     }
 
@@ -83,7 +85,9 @@ class App : CliktCommand() {
             return
         }
 
-        startBroker(config, authManager, authenticationTokenService)
+
+
+        startBroker(config, authManager, authenticationTokenService, NoopInnerTraffic(config.mqttConfig.nodeName ?: Constants.MASTER_NODE_NAME))
 
         startHttp(config, authManager, authenticationTokenService, enableDashboard)
     }

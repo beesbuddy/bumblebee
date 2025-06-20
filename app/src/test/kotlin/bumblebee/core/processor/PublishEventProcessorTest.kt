@@ -14,6 +14,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.embedded.EmbeddedChannel
 import io.netty.handler.codec.mqtt.*
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
@@ -66,14 +67,15 @@ class PublishEventProcessorTest {
     }
 
     @Test
-    fun process_WhenPublishAtMostOnceMessage_ThenHandleMessage() {
+    fun process_WhenPublishAtMostOnceMessage_ThenHandleMessage() = runTest {
         Mockito.`when`(
-            authManager.authorization(
-                clientId = CLIENT_ID,
+            authManager.authorized(
+                userId = CLIENT_ID,
                 scope = TOPIC,
-                type = AccessControl.Type.MQTT
+                acType = AccessControl.Type.MQTT,
+                permission = Permission.WRITE
             )
-        ).thenReturn(Role.createReadOnly())
+        ).thenReturn(true)
         Mockito.`when`(store.matchSubscription(TOPIC))
             .thenReturn(listOf(Subscription(clientId = CLIENT_ID, topic = TOPIC)))
         Mockito.`when`(store.getSession(CLIENT_ID)).thenReturn(targetClientSession)
@@ -110,14 +112,15 @@ class PublishEventProcessorTest {
     }
 
     @Test
-    fun process_WhenPublishAtLeastOnceMessage_ThenHandleMessage() {
+    fun process_WhenPublishAtLeastOnceMessage_ThenHandleMessage() = runTest {
         Mockito.`when`(
-            authManager.authorization(
-                clientId = CLIENT_ID,
+            authManager.authorized(
+                userId = CLIENT_ID,
                 scope = TOPIC,
-                type = AccessControl.Type.MQTT
+                acType = AccessControl.Type.MQTT,
+                permission = Permission.WRITE
             )
-        ).thenReturn(Role.createReadOnly())
+        ).thenReturn(true)
         Mockito.`when`(store.matchSubscription(TOPIC))
             .thenReturn(listOf(Subscription(clientId = CLIENT_ID, topic = TOPIC)))
         Mockito.`when`(store.getSession(CLIENT_ID)).thenReturn(targetClientSession)
@@ -155,14 +158,16 @@ class PublishEventProcessorTest {
     }
 
     @Test
-    fun process_WhenPublishExactlyOnceMessage_ThenHandleMessage() {
+    fun process_WhenPublishExactlyOnceMessage_ThenHandleMessage() = runTest {
+
         Mockito.`when`(
-            authManager.authorization(
-                clientId = CLIENT_ID,
+            authManager.authorized(
+                userId = CLIENT_ID,
                 scope = TOPIC,
-                type = AccessControl.Type.MQTT
+                acType = AccessControl.Type.MQTT,
+                permission = Permission.WRITE
             )
-        ).thenReturn(Role.createReadOnly())
+        ).thenReturn(true)
         Mockito.`when`(store.matchSubscription(TOPIC))
             .thenReturn(listOf(Subscription(clientId = CLIENT_ID, topic = TOPIC)))
         Mockito.`when`(store.getSession(CLIENT_ID)).thenReturn(targetClientSession)
