@@ -1,0 +1,39 @@
+package bumblebee.tinyflux
+
+import Point
+
+class SimpleQuery(
+    private val pointAttr: String,
+    private val operator: (Any?, Any?) -> Boolean,
+    private val rhs: Any?,
+    private val test: (Any?) -> Boolean,
+    private val pathResolver: (Any?) -> Any?,
+    override val hashValue: Any?
+) : Query {
+
+    override fun invoke(point: Point): Boolean {
+        val attrValue = try {
+            point.resolveAttribute(pointAttr)
+        } catch (_: Exception) {
+            return false
+        }
+
+        val resolved = try {
+            pathResolver(attrValue)
+        } catch (_: Exception) {
+            return false
+        }
+
+        return test(resolved)
+    }
+
+    override fun hashCode(): Int = hashValue?.hashCode() ?: 0
+    override fun equals(other: Any?): Boolean =
+        other is SimpleQuery && hashValue == other.hashValue
+
+    override fun toString(): String = "SimpleQuery($hashValue)"
+
+    operator fun not() = CompoundQuery(this, null, { a, _ -> !a }, listOf("not", hashValue))
+    infix fun and(other: Query) = CompoundQuery(this, other, { a, b -> a && b }, listOf("and", hashValue, other.hashValue))
+    fun or(other: Query) = CompoundQuery(this, other, { a, b -> a || b }, listOf("or", hashValue, other.hashValue))
+}

@@ -59,8 +59,8 @@ class PublishEventProcessorTest {
                 }
             }
         })
-        ec.config().setWriteBufferLowWaterMark(5)
-        ec.config().setWriteBufferHighWaterMark(10)
+        ec.config().writeBufferLowWaterMark = 5
+        ec.config().writeBufferHighWaterMark = 10
 
         NettyUtil.clientId(ec.pipeline().channel(), Constants.CLIENT_ID)
         NettyUtil.userName(ec.pipeline().channel(), Constants.USER_NAME)
