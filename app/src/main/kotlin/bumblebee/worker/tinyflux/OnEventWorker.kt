@@ -23,7 +23,7 @@ class OnEventWorker(val config: WorkerConfig) : IEventsWorker {
 
         config.tinyFluxConfig?.let {
             if (null != it.organization) {
-                client = TinyFlux.withCsv(Path.of(it.organization!!))
+                client = TinyFlux.getInstance(it.organization!!, Path.of(it.organization!!))
             }
         }
     }
@@ -46,6 +46,10 @@ class OnEventWorker(val config: WorkerConfig) : IEventsWorker {
     }
 
     override fun close() {
-        client?.close()
+        config.tinyFluxConfig?.let {
+            if (null != it.organization) {
+                TinyFlux.closeInstance(it.organization!!)
+            }
+        }
     }
 }
