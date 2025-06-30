@@ -1,6 +1,6 @@
 package bumblebee.tinyflux.table
 
-import Point
+import bumblebee.tinyflux.Point
 import bumblebee.tinyflux.Index
 import bumblebee.tinyflux.query.Query
 

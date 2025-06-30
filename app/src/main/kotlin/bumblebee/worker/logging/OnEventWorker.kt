@@ -54,4 +54,7 @@ class OnEventWorker(var config: WorkerConfig) : IEventsWorker {
         val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Date())
         file.appendText("$timestamp $payload${System.lineSeparator()}")
     }
+
+    override fun close() {
+    }
 }

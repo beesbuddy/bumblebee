@@ -5,7 +5,7 @@ import bumblebee.core.event.message.mqtt.*
 import cn.hutool.core.util.ClassLoaderUtil
 
 
-interface IEventsWorker {
+interface IEventsWorker: AutoCloseable {
     companion object {
         @Volatile
         private var instance: List<IEventsWorker>? = null

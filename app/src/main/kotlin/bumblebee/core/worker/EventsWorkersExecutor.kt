@@ -62,6 +62,7 @@ class EventsWorkersExecutor(private var eventListeners: List<IEventsWorker>) {
     }
 
     fun close() {
+        eventListeners.forEach { it.close() }
         executorService?.shutdown()
     }
 

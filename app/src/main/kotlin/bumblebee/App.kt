@@ -27,7 +27,7 @@ class App : CliktCommand() {
     private val configPath by option("-c", "--config", help = "path to configuration")
     private val passwordToHash by option("-h", "--hash", help = "hash password")
     private val generateAdminToken by option("-t", "--token", help = "generate admin token").flag(default = false)
-    private val enableDashboard by option("-a", "--admin", help = "enable administration dashboard").flag(default = false)
+    private val enableDashboard by option("-a", "--admin", help = "enable administration dashboard").flag(default = true)
     private val generateSecret by option("-s", "--secret", help = "generates secret to be used with jwt token").flag(default = false)
 
     private fun startBroker(config: Config, authManager: IAuthManager, authenticationTokenService: AuthenticationTokenService, innerTraffic: IInnerTraffic) {
@@ -84,8 +84,6 @@ class App : CliktCommand() {
             println("Secret for token [$encoded]")
             return
         }
-
-
 
         startBroker(config, authManager, authenticationTokenService, NoopInnerTraffic(config.mqttConfig.nodeName ?: Constants.MASTER_NODE_NAME))
 

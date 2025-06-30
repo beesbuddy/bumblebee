@@ -1,6 +1,6 @@
-package bumblebee.tinyflux.storage
+package bumblebee.tinyflux.store
 
-import Point
+import bumblebee.tinyflux.Point
 import bumblebee.tinyflux.CsvUtils
 import java.nio.file.Files
 import java.nio.file.Path
@@ -8,6 +8,7 @@ import java.nio.file.StandardOpenOption
 import java.time.Duration
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
@@ -16,14 +17,16 @@ import kotlin.io.path.exists
 import kotlin.io.path.fileSize
 
 
-class RotatingCsvStorage(
+class RotatingCsvStore(
     private val baseDir: Path,
     private val activeFile: Path = baseDir.resolve("data.csv"),
-    private val timeThreshold: Duration = Duration.ofDays(30)
+    private val timeThreshold: Duration = Duration.ofDays(30),
+    private val maxPointsPerHour: Int = Int.MAX_VALUE
 ) : AutoCloseable {
 
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM")
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
+    private val hourlyCount = mutableMapOf<ZonedDateTime, Int>()
 
     init {
         Files.createDirectories(baseDir)
@@ -33,7 +36,18 @@ class RotatingCsvStorage(
         startScheduler()
     }
 
+    @Synchronized
     fun insert(point: Point) {
+        val hour = point.time.truncatedTo(ChronoUnit.HOURS)
+
+        val count = hourlyCount.getOrDefault(hour, 0)
+
+        if (count >= maxPointsPerHour) {
+            return
+        }
+
+        hourlyCount[hour] = count + 1
+
         Files.newBufferedWriter(activeFile, StandardOpenOption.APPEND).use {
             it.write(CsvUtils.encodePoint(point) + "\n")
         }

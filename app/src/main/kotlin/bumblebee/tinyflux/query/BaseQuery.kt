@@ -1,5 +1,6 @@
 package bumblebee.tinyflux.query
 
+
 abstract class BaseQuery {
     protected var pointAttr: String? = null
     protected val path: MutableList<Any> = mutableListOf()

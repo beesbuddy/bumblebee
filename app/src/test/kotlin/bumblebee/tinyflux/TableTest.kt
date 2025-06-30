@@ -1,6 +1,5 @@
 package bumblebee.tinyflux
 
-import Point
 import bumblebee.tinyflux.query.FieldQuery
 import bumblebee.tinyflux.query.TagQuery
 import bumblebee.tinyflux.query.TimeQuery

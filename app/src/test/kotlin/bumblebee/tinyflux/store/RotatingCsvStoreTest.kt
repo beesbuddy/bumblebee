@@ -1,6 +1,6 @@
-package bumblebee.tinyflux.storage
+package bumblebee.tinyflux.store
 
-import Point
+import bumblebee.tinyflux.Point
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -11,14 +11,14 @@ import java.util.zip.GZIPInputStream
 import kotlin.test.Test
 
 
-class RotatingCsvStorageTest {
+class RotatingCsvStoreTest {
     private lateinit var tempDir: File
-    private lateinit var storage: RotatingCsvStorage
+    private lateinit var storage: RotatingCsvStore
 
     @BeforeEach
     fun setup() {
-        tempDir = Files.createTempDirectory("csvtest").toFile()
-        storage = RotatingCsvStorage(tempDir.toPath())
+        tempDir = Files.createTempDirectory("test").toFile()
+        storage = RotatingCsvStore(tempDir.toPath())
     }
 
     @AfterEach

@@ -1,6 +1,6 @@
 package bumblebee.tinyflux.query
 
-import Point
+import bumblebee.tinyflux.Point
 
 
 class CompoundQuery(

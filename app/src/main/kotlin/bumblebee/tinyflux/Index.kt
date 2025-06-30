@@ -1,5 +1,4 @@
 package bumblebee.tinyflux
-import Point
 import bumblebee.tinyflux.query.Query
 import java.time.ZonedDateTime
 

@@ -1,9 +1,9 @@
 package bumblebee.tinyflux.table
 
-import Point
+import bumblebee.tinyflux.Point
 import bumblebee.tinyflux.Index
 import bumblebee.tinyflux.query.Query
-import bumblebee.tinyflux.storage.RotatingCsvStorage
+import bumblebee.tinyflux.store.RotatingCsvStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -11,7 +11,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class CsvTable(private val storage: RotatingCsvStorage, scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())) : AutoCloseable, Table  {
+
+class CsvTable(private val storage: RotatingCsvStore, scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())) : AutoCloseable, Table  {
     private val queryCache = mutableMapOf<Query, List<Point>>()
     private val insertChannel = Channel<Point>(capacity = Channel.UNLIMITED)
     private val index: Index
@@ -44,6 +45,10 @@ class CsvTable(private val storage: RotatingCsvStorage, scope: CoroutineScope = 
 
         return result
     }
+
+    fun count(): Int = storage.loadCurrent().size
+
+    fun all(): List<Point> = storage.loadCurrent().sortedBy { it.time }
 
     override fun close() {
         runBlocking {

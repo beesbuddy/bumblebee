@@ -1,8 +1,8 @@
 package bumblebee.tinyflux
 
-import Point
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+
 
 object CsvUtils {
     private val dateFormatter = DateTimeFormatter.ISO_ZONED_DATE_TIME

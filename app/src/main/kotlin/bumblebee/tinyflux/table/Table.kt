@@ -1,7 +1,8 @@
 package bumblebee.tinyflux.table
 
-import Point
+import bumblebee.tinyflux.Point
 import bumblebee.tinyflux.query.Query
+
 
 interface Table {
     fun insert(point: Point)

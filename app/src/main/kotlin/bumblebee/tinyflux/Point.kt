@@ -1,5 +1,8 @@
+package bumblebee.tinyflux
+
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+
 
 data class Point(
     val time: ZonedDateTime,

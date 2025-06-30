@@ -1,6 +1,6 @@
 package bumblebee.core.config
 
 data class WorkerConfig(
-    var influxDbConfig: InfluxDbConfig? = InfluxDbConfig(),
+    var tinyFluxConfig: TinyFluxConfig? = TinyFluxConfig(),
     var loggingConfig: LoggingConfig? = LoggingConfig()
 )
