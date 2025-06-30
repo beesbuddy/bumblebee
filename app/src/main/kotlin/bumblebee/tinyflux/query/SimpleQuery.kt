@@ -8,7 +8,7 @@ class SimpleQuery(
     private val rhs: Any?,
     private val test: (Any?) -> Boolean,
     private val pathResolver: (Any?) -> Any?,
-    override val hashValue: Any?
+    override val hash: Any?
 ) : Query {
     override fun invoke(point: Point): Boolean {
         val attrValue = try {
@@ -26,16 +26,16 @@ class SimpleQuery(
         return test(resolved)
     }
 
-    infix fun and(other: Query) = CompoundQuery(this, other, { a, b -> a && b }, listOf("and", hashValue, other.hashValue))
+    infix fun and(other: Query) = CompoundQuery(this, other, { a, b -> a && b }, listOf("and", hash, other.hash))
 
-    infix fun or(other: Query) = CompoundQuery(this, other, { a, b -> a || b }, listOf("or", hashValue, other.hashValue))
+    infix fun or(other: Query) = CompoundQuery(this, other, { a, b -> a || b }, listOf("or", hash, other.hash))
 
-    override fun hashCode(): Int = hashValue?.hashCode() ?: 0
+    override fun hashCode(): Int = hash?.hashCode() ?: 0
 
     override fun equals(other: Any?): Boolean =
-        other is SimpleQuery && hashValue == other.hashValue
+        other is SimpleQuery && hash == other.hash
 
-    override fun toString(): String = "SimpleQuery($hashValue)"
+    override fun toString(): String = "SimpleQuery($hash)"
 
-    operator fun not() = CompoundQuery(this, null, { a, _ -> !a }, listOf("not", hashValue))
+    operator fun not() = CompoundQuery(this, null, { a, _ -> !a }, listOf("not", hash))
 }

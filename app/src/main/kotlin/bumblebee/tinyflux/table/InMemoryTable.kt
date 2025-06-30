@@ -3,7 +3,6 @@ package bumblebee.tinyflux.table
 import Point
 import bumblebee.tinyflux.Index
 import bumblebee.tinyflux.query.Query
-import kotlinx.coroutines.channels.ChannelResult
 
 
 class InMemoryTable(points: List<Point> = emptyList()): AutoCloseable, Table {

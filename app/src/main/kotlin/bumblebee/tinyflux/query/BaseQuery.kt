@@ -6,7 +6,7 @@ abstract class BaseQuery {
     protected var pathRequired: Boolean = false
     protected var hashValueInternal: Any? = null
 
-    val hashValue: Any?
+    val hash: Any?
         get() = hashValueInternal
 
     fun isHashable(): Boolean = hashValueInternal != null

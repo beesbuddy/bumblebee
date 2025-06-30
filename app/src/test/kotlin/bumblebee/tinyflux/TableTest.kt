@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Assertions.*
 import java.time.ZonedDateTime
 import kotlin.test.Test
 
-class TableTests {
+class InMemoryTableTests {
     @Test
-    fun testInsertAndSelectAll() {
+    fun `test insert and select all`() {
         val inMemoryTable = InMemoryTable()
         stubSamplePoints().forEach { inMemoryTable.insert(it) }
         val all = inMemoryTable.select()
@@ -19,7 +19,7 @@ class TableTests {
     }
 
     @Test
-    fun testEqQueryByTag() {
+    fun `test equal operation in query by tag`() {
         val inMemoryTable = InMemoryTable(stubSamplePoints())
         val q = TagQuery()["city"]
         val result = inMemoryTable.select(q eq "LA")
@@ -27,7 +27,7 @@ class TableTests {
         assertTrue(result.all { it.tags["city"] == "LA" })
     }
     @Test
-    fun testNeQueryByTag() {
+    fun `test ne query by tag`() {
         val inMemoryTable = InMemoryTable(stubSamplePoints())
         val q = TagQuery()["city"]
         val result = inMemoryTable.select(q ne "LA")
@@ -36,7 +36,7 @@ class TableTests {
     }
 
     @Test
-    fun testQueryByTime() {
+    fun `test query by time`() {
         val inMemoryTable = InMemoryTable(stubSamplePoints())
         val date = ZonedDateTime.parse("2024-01-02T00:00:00Z")
         val q = TimeQuery()
@@ -45,7 +45,7 @@ class TableTests {
     }
 
     @Test
-    fun testCompoundQuery() {
+    fun `test compound query`() {
         val inMemoryTable = InMemoryTable(stubSamplePoints())
         val tempQ = FieldQuery()["temp"]
         val cityQ = TagQuery()["city"]
