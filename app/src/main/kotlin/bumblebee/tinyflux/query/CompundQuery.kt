@@ -1,4 +1,4 @@
-package bumblebee.tinyflux
+package bumblebee.tinyflux.query
 
 import Point
 

@@ -1,10 +1,9 @@
 package bumblebee.tinyflux
 import Point
+import bumblebee.tinyflux.query.Query
 import java.time.ZonedDateTime
 
-/**
- * Index structure to support efficient query execution on a list of Points.
- */
+
 class Index(private val points: List<Point>) {
 
     private val tagIndex: Map<String, Map<String, Set<Point>>> by lazy {

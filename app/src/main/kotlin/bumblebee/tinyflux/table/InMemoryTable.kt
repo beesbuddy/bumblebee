@@ -1,27 +1,24 @@
-package bumblebee.tinyflux
+package bumblebee.tinyflux.table
 
 import Point
+import bumblebee.tinyflux.Index
+import bumblebee.tinyflux.query.Query
+import kotlinx.coroutines.channels.ChannelResult
 
-class Table(points: List<Point> = emptyList()) {
 
+class InMemoryTable(points: List<Point> = emptyList()): AutoCloseable, Table {
     private val points = mutableListOf<Point>().apply { addAll(points) }
     private val queryCache = mutableMapOf<Query, List<Point>>()
     private val index: Index
         get() = Index(points)
 
-    fun insert(point: Point) {
+    override fun insert(point: Point) {
         point.validate()
         points.add(point)
-        queryCache.clear() // invalidate cache
-    }
-
-    fun insertMany(newPoints: List<Point>) {
-        newPoints.forEach { it.validate() }
-        points.addAll(newPoints)
         queryCache.clear()
     }
 
-    fun select(query: Query? = null): List<Point> {
+    override fun select(query: Query?): List<Point> {
         if (query == null) return points.sortedBy { it.time }
 
         if (query.isHashable()) {
@@ -43,5 +40,9 @@ class Table(points: List<Point> = emptyList()) {
     }
 
     fun count(): Int = points.size
+
     fun all(): List<Point> = points.toList()
+
+    override fun close() {
+    }
 }

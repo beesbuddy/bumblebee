@@ -1,4 +1,4 @@
-package bumblebee.tinyflux
+package bumblebee.tinyflux.query
 
 abstract class BaseQuery {
     protected var pointAttr: String? = null
