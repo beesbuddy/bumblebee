@@ -7,7 +7,7 @@ class TimeQuery : BaseQuery() {
     init {
         pointAttr = "_time"
         pathRequired = false
-        hashValueInternal = listOf("time")
+        hashInternal = listOf("time")
     }
 
     infix fun lt(rhs: ZonedDateTime): SimpleQuery = generateSimpleQuery(

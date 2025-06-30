@@ -4,12 +4,12 @@ abstract class BaseQuery {
     protected var pointAttr: String? = null
     protected val path: MutableList<Any> = mutableListOf()
     protected var pathRequired: Boolean = false
-    protected var hashValueInternal: Any? = null
+    protected var hashInternal: Any? = null
 
     val hash: Any?
-        get() = hashValueInternal
+        get() = hashInternal
 
-    fun isHashable(): Boolean = hashValueInternal != null
+    fun isHashable(): Boolean = hashInternal != null
 
     open operator fun get(key: String): BaseQuery = attr(key)
 
@@ -19,7 +19,7 @@ abstract class BaseQuery {
         newQuery.pointAttr = this.pointAttr
         newQuery.pathRequired = this.pathRequired
         newQuery.path.addAll(this.path + key)
-        newQuery.hashValueInternal = listOf("path", newQuery.path)
+        newQuery.hashInternal = listOf("path", newQuery.path)
         return newQuery
     }
 

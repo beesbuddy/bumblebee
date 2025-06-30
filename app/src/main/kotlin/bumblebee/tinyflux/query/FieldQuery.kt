@@ -6,7 +6,7 @@ class FieldQuery : BaseQuery() {
     init {
         pointAttr = "_fields"
         pathRequired = true
-        hashValueInternal = listOf("fields")
+        hashInternal = listOf("fields")
     }
 
     fun exists(): SimpleQuery = generateSimpleQuery(

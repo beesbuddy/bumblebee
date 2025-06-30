@@ -5,7 +5,7 @@ class MeasurementQuery : BaseQuery() {
     init {
         pointAttr = "_measurement"
         pathRequired = false
-        hashValueInternal = listOf("measurement")
+        hashInternal = listOf("measurement")
     }
 
     fun eq(rhs: String): SimpleQuery = generateSimpleQuery(

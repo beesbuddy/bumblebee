@@ -8,7 +8,7 @@ class TagQuery : BaseQuery() {
     init {
         pointAttr = "_tags"
         pathRequired = true
-        hashValueInternal = listOf("tags")
+        hashInternal = listOf("tags")
     }
 
     operator fun invoke(rhs: String): SimpleQuery = this eq rhs
@@ -55,7 +55,7 @@ class TagQuery : BaseQuery() {
 
     operator fun compareTo(rhs: String): Int = error("Cannot compare TagQuery directly. Use == or != operators.")
 
-    override fun hashCode(): Int = hashValueInternal?.hashCode() ?: 0
+    override fun hashCode(): Int = hashInternal?.hashCode() ?: 0
 
     override fun toString(): String = "TagQuery(path=$path)"
 
