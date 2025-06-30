@@ -2,6 +2,7 @@ package bumblebee.tinyflux.query
 
 import Point
 
+
 class SimpleQuery(
     private val pointAttr: String,
     private val operator: (Any?, Any?) -> Boolean,

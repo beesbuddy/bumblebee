@@ -2,6 +2,7 @@ package bumblebee.tinyflux.query
 
 import java.util.regex.Pattern
 
+
 class TagQuery : BaseQuery() {
 
     init {

@@ -2,6 +2,7 @@ package bumblebee.tinyflux.query
 
 import java.time.ZonedDateTime
 
+
 class TimeQuery : BaseQuery() {
     init {
         pointAttr = "_time"

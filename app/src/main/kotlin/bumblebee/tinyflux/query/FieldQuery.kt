@@ -1,5 +1,6 @@
 package bumblebee.tinyflux.query
 
+
 class FieldQuery : BaseQuery() {
 
     init {

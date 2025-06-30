@@ -1,9 +1,6 @@
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-/**
- * Representation of a TinyFlux data point.
- */
 data class Point(
     val time: ZonedDateTime,
     val measurement: String,

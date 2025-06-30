@@ -1,5 +1,6 @@
 package bumblebee.tinyflux.query
 
+
 class MeasurementQuery : BaseQuery() {
     init {
         pointAttr = "_measurement"

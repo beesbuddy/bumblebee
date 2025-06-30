@@ -2,6 +2,7 @@ package bumblebee.tinyflux.query
 
 import Point
 
+
 class CompoundQuery(
     private val query1: Query,
     private val query2: Query?,
