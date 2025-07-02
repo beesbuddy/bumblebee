@@ -11,7 +11,7 @@ private const val CLIENT_ID = "clientId"
 
 class InMemoryMessageIdStoreTest {
     @Test
-    fun `when generating next messageid then limit should not be overstepped`() {
+    fun `when generating next message id then limit should not be overstepped`() {
         val store = InMemoryMessageIdStore()
 
         (0..99999).forEach { i ->
@@ -19,11 +19,11 @@ class InMemoryMessageIdStoreTest {
             println(nextMessageId)
 
             if (nextMessageId <= 0) {
-                Assertions.fail<Any>(nextMessageId.toString() + "")
+                Assertions.fail<Any>("$nextMessageId")
             }
 
             if (nextMessageId >= 65535) {
-                Assertions.fail<Any>(nextMessageId.toString() + "")
+                Assertions.fail<Any>("$nextMessageId")
             }
         }
     }
