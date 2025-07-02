@@ -25,14 +25,14 @@ class InMemorySubscriptionStoreTest {
     }
 
     @Test
-    fun add_WhenAddingNewSubscription_ThenReturnAddFlag() {
+    fun `when adding a new subscription then return add flag`() {
         val store = InMemorySubscriptionStore()
         val added = store.addSubscription(Subscription(clientId = CLIENT_ID, topic = "topic", qos = MqttQoS.AT_LEAST_ONCE))
         assertTrue(added)
     }
 
     @Test
-    fun remove_WhenRemovingExistingSubscription_ThenReturnAddFlag() {
+    fun `when removing existing subscription then return add flag`() {
         val subscription = Subscription(clientId = CLIENT_ID, topic = "topic", qos = MqttQoS.AT_LEAST_ONCE)
         val store = InMemorySubscriptionStore()
         val added = store.addSubscription(subscription)
@@ -42,7 +42,7 @@ class InMemorySubscriptionStoreTest {
     }
 
     @Test
-    fun remove_WhenRemovingNotExistingSubscription_ThenReturnRemoveFlag() {
+    fun `when removing not existing subscription then return remove flag`() {
         val subscription = Subscription(clientId = CLIENT_ID, topic = "topic", qos = MqttQoS.AT_LEAST_ONCE)
         val store = InMemorySubscriptionStore()
         val added = store.addSubscription(subscription)
@@ -52,7 +52,7 @@ class InMemorySubscriptionStoreTest {
     }
 
     @Test
-    fun findAllBy_WhenGiveClientId_ThenFindAllSubscriptions() {
+    fun `when given client id then find all subscriptions`() {
         val store = InMemorySubscriptionStore()
         store.addSubscription(Subscription(clientId = "${CLIENT_ID}1", topic = "topic1", qos = MqttQoS.AT_LEAST_ONCE))
         store.addSubscription(Subscription(clientId = "${CLIENT_ID}1", topic = "topic2", qos = MqttQoS.AT_LEAST_ONCE))
@@ -61,7 +61,7 @@ class InMemorySubscriptionStoreTest {
     }
 
     @Test
-    fun findAllBy_WhenGiveClientIdWithSameTopic_ThenFindAllSubscriptions() {
+    fun `when given client id with same topic then find all subscriptions`() {
         val store = InMemorySubscriptionStore()
         store.addSubscription(Subscription(clientId = "${CLIENT_ID}1", topic = "topic1", qos = MqttQoS.AT_LEAST_ONCE))
         store.addSubscription(Subscription(clientId = "${CLIENT_ID}1", topic = "topic1", qos = MqttQoS.AT_LEAST_ONCE))
@@ -70,7 +70,7 @@ class InMemorySubscriptionStoreTest {
     }
 
     @Test
-    fun removeAllBy_WhenGivenClientId_ThenRemoveAllSubscriptions() {
+    fun `when given client id then remove all subscriptions`() {
         val store = InMemorySubscriptionStore()
         store.addSubscription(Subscription(clientId = "${CLIENT_ID}1", topic = "topic1", qos = MqttQoS.AT_LEAST_ONCE))
         store.addSubscription(Subscription(clientId = "${CLIENT_ID}1", topic = "topic2", qos = MqttQoS.AT_LEAST_ONCE))
@@ -80,7 +80,7 @@ class InMemorySubscriptionStoreTest {
     }
 
     @Test
-    fun removeAllBy_WhenGivenClientIdWithSameTopic_ThenRemoveAllSubscriptions() {
+    fun `when given client id with same topic then remove all subscriptions`() {
         val store = InMemorySubscriptionStore()
         store.addSubscription(Subscription(clientId = "${CLIENT_ID}1", topic = "topic1", qos = MqttQoS.AT_LEAST_ONCE))
         store.addSubscription(Subscription(clientId = "${CLIENT_ID}1", topic = "topic1", qos = MqttQoS.AT_LEAST_ONCE))
@@ -90,7 +90,7 @@ class InMemorySubscriptionStoreTest {
     }
 
     @Test
-    fun whenGivingTopicWithSpecificFormats_ThenAddSubscriptionBySpecificRules() {
+    fun `when giving topic with specific formats then add subscription by specific rules`() {
         var topic = "/"
         var addSuccess = subStore!!.addSubscription(Subscription(UUID.randomUUID().toString(), topic, MqttQoS.AT_LEAST_ONCE))
         Assertions.assertFalse(addSuccess)

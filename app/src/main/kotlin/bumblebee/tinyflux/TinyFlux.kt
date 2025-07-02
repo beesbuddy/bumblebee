@@ -5,6 +5,7 @@ import bumblebee.tinyflux.store.RotatingCsvStore
 import bumblebee.tinyflux.table.CsvTable
 import bumblebee.tinyflux.table.InMemoryTable
 import bumblebee.tinyflux.table.Table
+import bumblebee.tinyflux.table.TableType
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
@@ -27,11 +28,13 @@ class TinyFlux(
             return TinyFlux(CsvTable(storage))
         }
 
-
-        fun getInstance(orgId: String, storagePath: Path): TinyFlux {
-            // TODO: Implement possibility to return different TinyFlux instances
+        fun getInstance(type: TableType, orgId: String, storagePath: Path): TinyFlux {
             return instances.computeIfAbsent(orgId) {
-                withCsv(storagePath.resolve(orgId))
+                when (type) {
+                    TableType.IN_MEMORY -> withInMemory()
+                    TableType.CSV -> withCsv(storagePath.resolve(orgId))
+                    TableType.SQL_LITE -> TODO()
+                }
             }
         }
 

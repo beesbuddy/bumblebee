@@ -11,7 +11,7 @@ private const val CLIENT_ID = "clientId"
 
 class InMemoryMessageIdStoreTest {
     @Test
-    fun nextMessageId_WhenGeneratingNextMessageId_ThenLimitShouldNotBeOverstepped() {
+    fun `when generating next messageid then limit should not be overstepped`() {
         val store = InMemoryMessageIdStore()
 
         (0..99999).forEach { i ->
@@ -30,7 +30,7 @@ class InMemoryMessageIdStoreTest {
 
     @Test
     @Throws(InterruptedException::class)
-    fun nextMessageId_WhenGettingNextIdFromDifferentThreads_ThenThreadsCannotGetTheSameId() {
+    fun `when getting next id from different threads then threads cannot get the same id`() {
         val latch = CountDownLatch(100)
         val store = InMemoryMessageIdStore()
         val msgIdSet: MutableSet<Int> = ConcurrentHashSet()

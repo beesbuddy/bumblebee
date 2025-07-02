@@ -9,3 +9,9 @@ interface Table {
     fun select(query: Query? = null): List<Point>
     fun close()
 }
+
+enum class TableType {
+    IN_MEMORY,
+    CSV,
+    SQL_LITE;
+}
