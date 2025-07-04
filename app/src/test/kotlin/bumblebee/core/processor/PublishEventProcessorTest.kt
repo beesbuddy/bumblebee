@@ -67,7 +67,7 @@ class PublishEventProcessorTest {
     }
 
     @Test
-    fun process_WhenPublishAtMostOnceMessage_ThenHandleMessage() = runTest {
+    fun `when publish at most once message then handle message`() = runTest {
         Mockito.`when`(
             authManager.authorized(
                 userId = CLIENT_ID,
@@ -112,7 +112,7 @@ class PublishEventProcessorTest {
     }
 
     @Test
-    fun process_WhenPublishAtLeastOnceMessage_ThenHandleMessage() = runTest {
+    fun `when publish at least once message then handle message`() = runTest {
         Mockito.`when`(
             authManager.authorized(
                 userId = CLIENT_ID,
@@ -158,7 +158,7 @@ class PublishEventProcessorTest {
     }
 
     @Test
-    fun process_WhenPublishExactlyOnceMessage_ThenHandleMessage() = runTest {
+    fun `when publish exactly once message then handle message`() = runTest {
 
         Mockito.`when`(
             authManager.authorized(

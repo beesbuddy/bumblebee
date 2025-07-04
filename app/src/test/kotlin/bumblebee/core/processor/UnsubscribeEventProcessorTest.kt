@@ -53,7 +53,7 @@ class UnsubscribeEventProcessorTest {
     }
 
     @Test
-    fun process_WhenUnsubscribeMessage_ThenHandleMessage() {
+    fun `when unsubscribe message then handle message`() {
         Mockito.`when`(subscriptionStore.matchSubscription(TOPIC))
             .thenReturn(listOf(Subscription(clientId = CLIENT_ID, topic = TOPIC)))
 

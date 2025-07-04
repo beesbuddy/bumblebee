@@ -7,6 +7,7 @@ import bumblebee.core.util.ScopeUtil
 import bumblebee.core.worker.IEventsWorker
 import bumblebee.tinyflux.CsvUtils
 import bumblebee.tinyflux.TinyFlux
+import bumblebee.tinyflux.table.TableType
 import mu.KotlinLogging
 import java.nio.file.Path
 import java.time.ZonedDateTime
@@ -23,7 +24,7 @@ class OnEventWorker(val config: WorkerConfig) : IEventsWorker {
 
         config.tinyFluxConfig?.let {
             if (null != it.organization) {
-                client = TinyFlux.getInstance(it.organization!!, Path.of(it.organization!!))
+                client = TinyFlux.getInstance(TableType.CSV, it.organization!!, Path.of(it.organization!!))
             }
         }
     }

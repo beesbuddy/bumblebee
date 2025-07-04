@@ -47,7 +47,7 @@ class DisconnectEventProcessorTest {
     }
 
     @Test
-    fun process_WhenReceivingDisconnectMessageWithDifferentChannel_ThenCleanupSession() {
+    fun `when receiving disconnect message with different channel then cleanup session`() {
         val msg = MqttMessageBuilders.disconnect().build()
 
         NettyUtil.clientId(ec.pipeline().channel(), Constants.CLIENT_ID)
@@ -75,7 +75,7 @@ class DisconnectEventProcessorTest {
     }
 
     @Test
-    fun process_WhenReceivingDisconnectMessageWithSameChannel_ThenCleanupSession() {
+    fun `when receiving disconnect message with same channel then cleanup session`() {
         val msg = MqttMessageBuilders.disconnect().build()
 
         NettyUtil.clientId(ec.pipeline().channel(), Constants.CLIENT_ID)

@@ -57,7 +57,7 @@ class SubscribeEventProcessorTest {
     }
 
     @Test
-    fun process_WhenSubscribeMessage_ThenHandleMessage() {
+    fun `when subscribe message then handle message`() {
         Mockito.`when`(
             authManager.authorization(
                 clientId = CLIENT_ID,
