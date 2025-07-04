@@ -71,7 +71,7 @@ object FileBasedAuthManagerForSubscriptionTest {
     }
 
     @Test
-    fun whenSubscribeMultipleTimes_ThenReturnCorrectConnectionCount() {
+    fun `when subscribe multiple times then return correct connection count`() {
         for (i in 0..8) {
             TestMqttClient(
                 topic = DEFAULT_TOPIC,
@@ -87,7 +87,7 @@ object FileBasedAuthManagerForSubscriptionTest {
     }
 
     @Test
-    fun whenSubscribeWithBadUser_ThenDoNotAllowToConnect() {
+    fun `when subscribe with bad user then do not allow to connect`() {
         TestMqttClient(
             topic = DEFAULT_TOPIC,
             clientId = "${BASE_CLIENT_ID}_9",
@@ -101,7 +101,7 @@ object FileBasedAuthManagerForSubscriptionTest {
     }
 
     @Test
-    fun whenSubscribeWithoutAccessControl_ThenReturnCorrectConnectionCount() {
+    fun `when subscribe without access control then return correct connection count`() {
         TestMqttClient(
             topic = DEFAULT_TOPIC,
             clientId = "${BASE_CLIENT_ID}_9",

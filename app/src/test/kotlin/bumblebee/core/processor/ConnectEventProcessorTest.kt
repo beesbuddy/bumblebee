@@ -3,7 +3,6 @@ package bumblebee.core.processor
 import bumblebee.core.Constants
 import bumblebee.core.worker.EventsWorkersExecutor
 import bumblebee.core.worker.IEventsWorker
-import bumblebee.core.security.AuthManagerProvider
 import bumblebee.core.security.IAuthManager
 import bumblebee.core.store.mqtt.*
 import io.netty.channel.ChannelHandlerContext
@@ -48,12 +47,12 @@ class ConnectEventProcessorTest {
                 }
             }
         })
-        ec.config().setWriteBufferLowWaterMark(5)
-        ec.config().setWriteBufferHighWaterMark(10)
+        ec.config().writeBufferLowWaterMark = 5
+        ec.config().writeBufferHighWaterMark = 10
     }
 
     @Test
-    fun process_WhenClientIdIsNull_ThenReturnConnectionRejectAckMessage() {
+    fun `when client id is null then return connection reject ack message`() {
         val msg = MqttMessageBuilders.connect()
             .protocolVersion(MqttVersion.MQTT_3_1_1)
             .clientId(null)
@@ -72,7 +71,7 @@ class ConnectEventProcessorTest {
     }
 
     @Test
-    fun process_WhenNoPasswordProvided_ThenReturnConnectionRefusedBadUsernameOrPasswordAckMessage() {
+    fun `when no password provided then return connection ref used bad username or password ack message`() {
         Mockito.`when`(authManager.isAuthenticated(clientId = Constants.CLIENT_ID, userName = Constants.USER_NAME, password = "")).thenReturn(false)
 
         val msg = MqttMessageBuilders.connect()
@@ -93,7 +92,7 @@ class ConnectEventProcessorTest {
     }
 
     @Test
-    fun process_WhenConnectMessageIsCorrect_ThenReturnAckMessageWithCleanSession() {
+    fun `when connect message is correct then return ack message with clean session`() {
         Mockito.`when`(authManager.isAuthenticated(clientId = Constants.CLIENT_ID, userName = Constants.USER_NAME, password = "test")).thenReturn(true)
 
         val msg = MqttMessageBuilders.connect()
@@ -122,7 +121,7 @@ class ConnectEventProcessorTest {
     }
 
     @Test
-    fun process_WhenConnectMessageIsCorrect_ThenReturnAckMessageWithOldSession() {
+    fun `when connect message is correct then return ack message with old session`() {
         Mockito.`when`(authManager.isAuthenticated(clientId = Constants.CLIENT_ID, userName = Constants.USER_NAME, password = "test")).thenReturn(true)
 
         val msg = MqttMessageBuilders.connect()
