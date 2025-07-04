@@ -26,6 +26,8 @@ object Versions {
     const val JDBI3 = "3.41.3"
     const val H2 = "1.3.148"
     const val RESTASSURED = "5.4.0"
+    const val SQLITE = "3.49.1.0"
+    const val EXPOSED = "1.0.0-beta-3"
 }
 
 plugins {
@@ -81,8 +83,9 @@ dependencies {
     implementation("org.jdbi:jdbi3-jackson2:${Versions.JDBI3}")
     implementation("com.h2database:h2:${Versions.H2}")
 
-    implementation("org.xerial:sqlite-jdbc:3.49.1.0")
-    implementation("org.jooq:jooq:3.20.4")
+    implementation("org.xerial:sqlite-jdbc:${Versions.SQLITE}")
+    implementation("org.jetbrains.exposed:exposed-core:${Versions.EXPOSED}")
+    implementation("org.jetbrains.exposed:exposed-jdbc:${Versions.EXPOSED}")
 
     implementation(kotlin("reflect"))
 

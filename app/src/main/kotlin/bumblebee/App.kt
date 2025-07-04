@@ -11,6 +11,7 @@ import bumblebee.core.security.token.AuthenticationTokenParser
 import bumblebee.core.security.token.AuthenticationTokenService
 import bumblebee.core.util.ConfigUtil
 import bumblebee.core.util.Stopwatch
+import bumblebee.db.DbProvider
 import bumblebee.http.HttpFactory
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
@@ -19,6 +20,12 @@ import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.io.Encoders
 import io.jsonwebtoken.security.Keys
 import mu.KotlinLogging
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.count
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 private val log = KotlinLogging.logger {}
 
@@ -27,15 +34,31 @@ class App : CliktCommand() {
     private val configPath by option("-c", "--config", help = "path to configuration")
     private val passwordToHash by option("-h", "--hash", help = "hash password")
     private val generateAdminToken by option("-t", "--token", help = "generate admin token").flag(default = false)
-    private val enableDashboard by option("-a", "--admin", help = "enable administration dashboard").flag(default = true)
-    private val generateSecret by option("-s", "--secret", help = "generates secret to be used with jwt token").flag(default = false)
+    private val enableDashboard by option(
+        "-a",
+        "--admin",
+        help = "enable administration dashboard"
+    ).flag(default = true)
+    private val generateSecret by option("-s", "--secret", help = "generates secret to be used with jwt token").flag(
+        default = false
+    )
 
-    private fun startBroker(config: Config, authManager: IAuthManager, authenticationTokenService: AuthenticationTokenService, innerTraffic: IInnerTraffic) {
+    private fun startBroker(
+        config: Config,
+        authManager: IAuthManager,
+        authenticationTokenService: AuthenticationTokenService,
+        innerTraffic: IInnerTraffic
+    ) {
         val brokerServer = MQTTFactory.createBroker(config, authManager, innerTraffic)
         brokerServer.start()
     }
 
-    private fun startHttp(config: Config, authManager: IAuthManager, authenticationTokenService: AuthenticationTokenService, enableAdmin: Boolean) {
+    private fun startHttp(
+        config: Config,
+        authManager: IAuthManager,
+        authenticationTokenService: AuthenticationTokenService,
+        enableAdmin: Boolean
+    ) {
         val httpServer = HttpFactory.createServer(config, authManager, authenticationTokenService, enableAdmin)
         httpServer.start()
     }
@@ -46,11 +69,11 @@ class App : CliktCommand() {
         val config = configPath?.let {
             ConfigUtil.loadFromSystemProps(it, defaultConfig)
         } ?: ConfigUtil.loadFromSystemProps(
-                classPath = "classpath://config.properties",
-                prefix = Constants.APP_CONFIG_PROPS_PRE,
-                targetType = Config::class.java,
-                defaultValue = defaultConfig
-            )
+            classPath = "classpath://config.properties",
+            prefix = Constants.APP_CONFIG_PROPS_PRE,
+            targetType = Config::class.java,
+            defaultValue = defaultConfig
+        )
 
         val authManager = AuthManagerProvider.initialize(config.securityConfig)
 
@@ -72,7 +95,8 @@ class App : CliktCommand() {
             println("Generating super user token...")
             val token = authenticationTokenService.issueToken(
                 Constants.SUPER_USERNAME,
-                authManager.role("superadmin"))
+                authManager.role("superadmin")
+            )
             println("Token for super user [$token]")
             return
         }
@@ -85,13 +109,32 @@ class App : CliktCommand() {
             return
         }
 
-        startBroker(config, authManager, authenticationTokenService, NoopInnerTraffic(config.mqttConfig.nodeName ?: Constants.MASTER_NODE_NAME))
+        startBroker(
+            config,
+            authManager,
+            authenticationTokenService,
+            NoopInnerTraffic(config.mqttConfig.nodeName ?: Constants.MASTER_NODE_NAME)
+        )
 
         startHttp(config, authManager, authenticationTokenService, enableDashboard)
     }
 }
 
+const val MAX_VARCHAR_LENGTH = 128
+
+object EventWorkers : Table("event_workers") {
+    val id = integer("id").autoIncrement()
+    val title = varchar("name", MAX_VARCHAR_LENGTH)
+    val description = varchar("description", MAX_VARCHAR_LENGTH)
+
+    override val primaryKey = PrimaryKey(id)
+}
+
 fun main(args: Array<String>) {
+    transaction(DbProvider.db) {
+        SchemaUtils.create(EventWorkers)
+    }
+
     val stopwatch: Stopwatch = Stopwatch.start()
     App().main(args)
     stopwatch.stop()
