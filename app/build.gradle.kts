@@ -30,7 +30,7 @@ object Versions {
 
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "2.1.0"
+    id("org.jetbrains.kotlin.jvm") version "2.2.0"
 
     // Apply the application plugin to add support for building a CLI application in Java.
     application
@@ -58,7 +58,6 @@ dependencies {
     implementation("org.mindrot:jbcrypt:${Versions.JBCRYPT}")
     implementation("io.jsonwebtoken:jjwt:${Versions.JJWT}")
 
-//    implementation("org.glassfish.jersey.connectors:jersey-netty-connector:${Versions.JERSEY}")
     implementation("org.glassfish.jaxb:jaxb-runtime:${Versions.GLASSFISH}")
     implementation("org.glassfish.jersey.core:jersey-server:${Versions.JERSEY}")
     implementation("org.glassfish.jersey.containers:jersey-container-servlet:${Versions.JERSEY}")

@@ -36,6 +36,7 @@ class UnsubscribeEventProcessorTest {
         store = Mockito.mock()
         eventsWorkersExecutor = Mockito.mock()
         targetClientSession = Mockito.mock()
+        subscriptionStore = Mockito.mock()
 
         ec = EmbeddedChannel()
         ec.pipeline().addLast(HANDLER_ON_UNSUBSCRIBE, object : SimpleChannelInboundHandler<MqttMessage>() {
