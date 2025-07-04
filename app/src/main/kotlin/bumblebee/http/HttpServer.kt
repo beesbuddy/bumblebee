@@ -1,8 +1,12 @@
 package bumblebee.http
 
 import bumblebee.core.Constants
+import bumblebee.core.config.Config
 import bumblebee.core.config.WebConfig
 import bumblebee.core.http.NettyHttpContainer
+import bumblebee.core.security.IAuthManager
+import bumblebee.core.security.token.AuthenticationTokenService
+import bumblebee.core.util.SslContextUtil
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelOption
@@ -105,5 +109,24 @@ class HttpServer(
     private fun close() {
         bossGroup.shutdownGracefully()
         workerGroup.shutdownGracefully()
+    }
+
+    companion object Factory {
+        fun create(config: Config, authManager: IAuthManager, authenticationTokenService: AuthenticationTokenService, enableAdmin: Boolean): HttpServer {
+            val enableClientCA = config.sslContextConfig?.enableClientCA ?: false
+            val sslContext = SslContextUtil.createSslContext(
+                config = config.sslContextConfig,
+                enableClientCA = enableClientCA,
+            )
+
+            val app = ApiResourceConfig(config, authManager, authenticationTokenService)
+
+            return HttpServer(
+                app = app,
+                sslContext = sslContext,
+                enableClientCA = enableClientCA,
+                enableAdmin = enableAdmin
+            )
+        }
     }
 }

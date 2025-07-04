@@ -1,6 +1,5 @@
 package bumblebee.integration
 
-import bumblebee.mqtt.MQTTFactory
 import bumblebee.mqtt.MQTTServer
 import bumblebee.core.Constants
 import bumblebee.core.config.Config
@@ -56,7 +55,7 @@ object FileBasedAuthManagerForSubscriptionTest {
 
         val authManager = AuthManagerProvider.initialize(config.securityConfig)
 
-        broker = MQTTFactory.createBroker(
+        broker = MQTTServer.create(
             config,
             authManager,
             innerTraffic = NoopInnerTraffic("test")

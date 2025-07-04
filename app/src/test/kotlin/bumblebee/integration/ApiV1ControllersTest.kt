@@ -7,7 +7,6 @@ import bumblebee.core.security.*
 import bumblebee.core.security.token.AuthenticationTokenIssuer
 import bumblebee.core.security.token.AuthenticationTokenParser
 import bumblebee.core.security.token.AuthenticationTokenService
-import bumblebee.http.HttpFactory
 import bumblebee.http.HttpServer
 import io.restassured.RestAssured.given
 import org.hamcrest.Matchers.equalTo
@@ -56,7 +55,7 @@ object ApiV1ControllersTest {
         )
 
         httpServer =
-            HttpFactory.createServer(
+            HttpServer.create(
                 config, authManager, authenticationTokenService = authenticationTokenService,
                 enableAdmin = true
             )

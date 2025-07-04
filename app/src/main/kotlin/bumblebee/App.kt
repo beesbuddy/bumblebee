@@ -1,18 +1,21 @@
 package bumblebee
 
-import bumblebee.mqtt.MQTTFactory
 import bumblebee.core.Constants
 import bumblebee.core.config.Config
 import bumblebee.core.inner.traffic.IInnerTraffic
 import bumblebee.core.inner.traffic.NoopInnerTraffic
-import bumblebee.core.security.*
+import bumblebee.core.security.AuthManagerProvider
+import bumblebee.core.security.IAuthManager
+import bumblebee.core.security.JWTTokenConfig
+import bumblebee.core.security.PasswordEncoder
 import bumblebee.core.security.token.AuthenticationTokenIssuer
 import bumblebee.core.security.token.AuthenticationTokenParser
 import bumblebee.core.security.token.AuthenticationTokenService
 import bumblebee.core.util.ConfigUtil
 import bumblebee.core.util.Stopwatch
 import bumblebee.db.DbProvider
-import bumblebee.http.HttpFactory
+import bumblebee.http.HttpServer
+import bumblebee.mqtt.MQTTServer
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
@@ -21,10 +24,7 @@ import io.jsonwebtoken.io.Encoders
 import io.jsonwebtoken.security.Keys
 import mu.KotlinLogging
 import org.jetbrains.exposed.v1.core.Table
-import org.jetbrains.exposed.v1.core.count
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 private val log = KotlinLogging.logger {}
@@ -49,7 +49,7 @@ class App : CliktCommand() {
         authenticationTokenService: AuthenticationTokenService,
         innerTraffic: IInnerTraffic
     ) {
-        val brokerServer = MQTTFactory.createBroker(config, authManager, innerTraffic)
+        val brokerServer = MQTTServer.create(config, authManager, innerTraffic)
         brokerServer.start()
     }
 
@@ -59,7 +59,7 @@ class App : CliktCommand() {
         authenticationTokenService: AuthenticationTokenService,
         enableAdmin: Boolean
     ) {
-        val httpServer = HttpFactory.createServer(config, authManager, authenticationTokenService, enableAdmin)
+        val httpServer = HttpServer.create(config, authManager, authenticationTokenService, enableAdmin)
         httpServer.start()
     }
 
