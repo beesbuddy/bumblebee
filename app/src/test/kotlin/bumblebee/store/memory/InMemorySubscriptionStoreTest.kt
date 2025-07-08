@@ -2,7 +2,7 @@ package bumblebee.store.memory
 
 import bumblebee.core.Constants
 import bumblebee.core.subscription.Subscription
-import bumblebee.store.mqtt.memory.InMemorySubscriptionStore
+import bumblebee.mqtt.store.InMemorySubscriptionStore
 import cn.hutool.core.collection.CollUtil
 import com.alibaba.fastjson.JSON
 import io.netty.handler.codec.mqtt.MqttQoS

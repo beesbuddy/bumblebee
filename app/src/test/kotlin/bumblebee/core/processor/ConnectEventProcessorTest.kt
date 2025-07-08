@@ -5,6 +5,7 @@ import bumblebee.core.worker.EventsWorkersExecutor
 import bumblebee.core.worker.IEventsWorker
 import bumblebee.core.security.IAuthManager
 import bumblebee.core.store.mqtt.*
+import bumblebee.mqtt.processor.ConnectEventProcessor
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.embedded.EmbeddedChannel

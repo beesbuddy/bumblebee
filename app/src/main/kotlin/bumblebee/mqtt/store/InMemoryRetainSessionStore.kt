@@ -1,4 +1,4 @@
-package bumblebee.store.mqtt.memory
+package bumblebee.mqtt.store
 
 import bumblebee.core.event.message.mqtt.CommonPublishMessage
 import bumblebee.core.store.mqtt.IRetainMessageStore

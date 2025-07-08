@@ -1,4 +1,4 @@
-package bumblebee.core.processor
+package bumblebee.mqtt.processor
 
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.mqtt.MqttMessage

@@ -1,4 +1,4 @@
-package bumblebee.core.processor
+package bumblebee.mqtt.processor
 
 import bumblebee.core.event.message.mqtt.PingEventMessage
 import bumblebee.core.worker.EventsWorkersExecutor

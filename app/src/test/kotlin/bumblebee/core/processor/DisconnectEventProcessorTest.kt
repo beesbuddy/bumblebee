@@ -7,6 +7,7 @@ import bumblebee.core.store.mqtt.*
 import bumblebee.core.worker.EventsWorkersExecutor
 import bumblebee.core.worker.IEventsWorker
 import bumblebee.core.util.NettyUtil
+import bumblebee.mqtt.processor.DisconnectEventProcessor
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.embedded.EmbeddedChannel

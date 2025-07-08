@@ -1,4 +1,4 @@
-package bumblebee.core.processor
+package bumblebee.mqtt.processor
 
 import bumblebee.core.Constants
 import bumblebee.core.client.ClientSession
@@ -6,7 +6,6 @@ import bumblebee.core.event.message.mqtt.CommonPublishMessage
 import bumblebee.core.event.message.mqtt.ConnectEventMessage
 import bumblebee.core.worker.EventsWorkersExecutor
 import bumblebee.core.worker.IEventsWorker
-import bumblebee.core.security.AuthManagerProvider
 import bumblebee.core.security.IAuthManager
 import bumblebee.core.store.mqtt.*
 import bumblebee.core.util.MessageUtil

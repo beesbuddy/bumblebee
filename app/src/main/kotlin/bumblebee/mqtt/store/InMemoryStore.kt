@@ -1,4 +1,4 @@
-package bumblebee.store.mqtt.memory
+package bumblebee.mqtt.store
 
 import bumblebee.core.client.ClientSession
 import bumblebee.core.config.Config

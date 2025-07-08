@@ -6,6 +6,8 @@ import bumblebee.core.store.mqtt.IStore
 import bumblebee.core.subscription.Subscription
 import bumblebee.core.util.NettyUtil
 import bumblebee.core.worker.EventsWorkersExecutor
+import bumblebee.mqtt.processor.PublishEventProcessor
+import bumblebee.mqtt.processor.SubscribeEventProcessor
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.embedded.EmbeddedChannel

@@ -17,16 +17,14 @@ private val log = KotlinLogging.logger {}
 
 // TODO: Pass auth manager.
 class OnEventWorker(val config: WorkerConfig) : IEventsWorker {
-    var client: TinyFlux? = null
+    val client: TinyFlux? by lazy {
+        config.tinyFluxConfig?.organization?.let {
+            TinyFlux.getInstance(TableType.CSV, it, Path.of(it))
+        }
+    }
 
     init {
         log.info("TinyFlux worker initialized")
-
-        config.tinyFluxConfig?.let {
-            if (null != it.organization) {
-                client = TinyFlux.getInstance(TableType.CSV, it.organization!!, Path.of(it.organization!!))
-            }
-        }
     }
 
     override fun onPublish(publishMessage: PublishEventMessage?) {

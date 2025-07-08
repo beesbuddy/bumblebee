@@ -9,6 +9,7 @@ import bumblebee.core.subscription.Subscription
 import bumblebee.core.util.NettyUtil
 import bumblebee.core.worker.EventsWorkersExecutor
 import bumblebee.core.worker.IEventsWorker
+import bumblebee.mqtt.processor.PublishEventProcessor
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler

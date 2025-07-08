@@ -1,8 +1,9 @@
-package bumblebee.store.mqtt.memory
+package bumblebee.mqtt.store
 
 import bumblebee.core.client.ClientSession
 import bumblebee.core.store.mqtt.ISessionStore
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.collections.get
 
 
 class InMemorySessionStore : ISessionStore {

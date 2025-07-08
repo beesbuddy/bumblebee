@@ -1,6 +1,6 @@
 package bumblebee.store.memory
 
-import bumblebee.store.mqtt.memory.InMemoryMessageIdStore
+import bumblebee.mqtt.store.InMemoryMessageIdStore
 import cn.hutool.core.collection.ConcurrentHashSet
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

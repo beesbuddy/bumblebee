@@ -6,6 +6,7 @@ import bumblebee.core.store.mqtt.ISubscriptionStore
 import bumblebee.core.subscription.Subscription
 import bumblebee.core.util.NettyUtil
 import bumblebee.core.worker.EventsWorkersExecutor
+import bumblebee.mqtt.processor.UnsubscribeEventProcessor
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.embedded.EmbeddedChannel

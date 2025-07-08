@@ -1,4 +1,4 @@
-package bumblebee.store.mqtt.memory
+package bumblebee.mqtt.store
 
 import bumblebee.core.Constants
 import bumblebee.core.store.mqtt.IMessageIdStore

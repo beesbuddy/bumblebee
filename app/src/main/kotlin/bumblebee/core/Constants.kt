@@ -14,7 +14,7 @@ object Constants {
     const val AUTH_ANONYMOUS = "bumblebee.security.anonymous.AuthManager"
     const val AUTH_MANAGER_FILE_BASED_CLASSNAME = "bumblebee.security.file.AuthManager"
 
-    const val DEFAULT_MQTT_STORE_CLASSNAME = "bumblebee.store.mqtt.memory.InMemoryStore"
+    const val DEFAULT_MQTT_STORE_CLASSNAME = "bumblebee.mqtt.store.InMemoryStore"
     const val DEFAULT_WEBSOCKET_PATH = "/mqtt"
     const val DEFAULT_PAYLOAD_LOGGING_PATH = "./"
 
