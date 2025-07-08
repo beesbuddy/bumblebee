@@ -2,7 +2,7 @@ package bumblebee.core.processor
 
 import bumblebee.core.client.ClientSession
 import bumblebee.core.security.*
-import bumblebee.core.store.mqtt.IStore
+import bumblebee.core.mqtt.store.IStore
 import bumblebee.core.subscription.Subscription
 import bumblebee.core.util.NettyUtil
 import bumblebee.core.worker.EventsWorkersExecutor

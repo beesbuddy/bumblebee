@@ -1,7 +1,7 @@
 package bumblebee.mqtt.store
 
 import bumblebee.core.Constants
-import bumblebee.core.store.mqtt.IMessageIdStore
+import bumblebee.core.mqtt.store.IMessageIdStore
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 

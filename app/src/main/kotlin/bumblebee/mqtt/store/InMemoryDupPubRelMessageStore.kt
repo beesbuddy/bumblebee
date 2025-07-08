@@ -1,7 +1,7 @@
 package bumblebee.mqtt.store
 
 import bumblebee.core.event.message.mqtt.CommonPublishMessage
-import bumblebee.core.store.mqtt.IDupPubRelMessageStore
+import bumblebee.core.mqtt.store.IDupPubRelMessageStore
 import cn.hutool.core.collection.CollUtil
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean

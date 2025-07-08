@@ -4,7 +4,7 @@ import bumblebee.core.client.ClientSession
 import bumblebee.core.event.message.mqtt.UnsubscribeEventMessage
 import bumblebee.core.worker.EventsWorkersExecutor
 import bumblebee.core.worker.IEventsWorker
-import bumblebee.core.store.mqtt.IStore
+import bumblebee.core.mqtt.store.IStore
 import bumblebee.core.subscription.Subscription
 import bumblebee.core.util.MessageUtil
 import bumblebee.core.util.NettyUtil

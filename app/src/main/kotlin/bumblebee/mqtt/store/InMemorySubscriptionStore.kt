@@ -1,6 +1,6 @@
 package bumblebee.mqtt.store
 
-import bumblebee.core.store.mqtt.UniqueByTopicInMemorySubscriptionStore
+import bumblebee.core.mqtt.store.UniqueByTopicInMemorySubscriptionStore
 import bumblebee.core.subscription.Subscription
 import cn.hutool.core.collection.CollUtil
 import cn.hutool.core.collection.ConcurrentHashSet

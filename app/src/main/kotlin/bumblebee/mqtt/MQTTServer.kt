@@ -15,7 +15,7 @@ import bumblebee.mqtt.processor.PublishEventProcessor
 import bumblebee.mqtt.processor.SubscribeEventProcessor
 import bumblebee.mqtt.processor.UnsubscribeEventProcessor
 import bumblebee.core.security.IAuthManager
-import bumblebee.core.store.mqtt.StoreProvider as MqttStoreProvider
+import bumblebee.core.mqtt.store.StoreProvider as MqttStoreProvider
 import bumblebee.core.util.SslContextUtil
 import bumblebee.core.worker.EventsWorkersExecutor
 import bumblebee.core.worker.IEventsWorker

@@ -1,4 +1,4 @@
-package bumblebee.core.store.mqtt
+package bumblebee.core.mqtt.store
 
 import bumblebee.core.subscription.SubWildcardTree
 import bumblebee.core.subscription.Subscription

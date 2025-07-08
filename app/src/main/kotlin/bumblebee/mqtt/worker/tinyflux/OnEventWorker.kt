@@ -1,4 +1,4 @@
-package bumblebee.worker.tinyflux
+package bumblebee.mqtt.worker.tinyflux
 
 import bumblebee.core.config.WorkerConfig
 import bumblebee.core.event.message.mqtt.PublishEventMessage

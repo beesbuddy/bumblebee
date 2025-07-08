@@ -3,7 +3,7 @@ package bumblebee.mqtt.processor
 import bumblebee.core.event.message.mqtt.PubCompEventMessage
 import bumblebee.core.worker.EventsWorkersExecutor
 import bumblebee.core.worker.IEventsWorker
-import bumblebee.core.store.mqtt.IStore
+import bumblebee.core.mqtt.store.IStore
 import bumblebee.core.util.NettyUtil
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.mqtt.MqttMessage

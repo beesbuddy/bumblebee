@@ -4,6 +4,7 @@ import bumblebee.core.client.ClientSession
 import bumblebee.core.event.message.mqtt.CommonPublishMessage
 import bumblebee.core.event.message.mqtt.PublishEventMessage
 import bumblebee.core.inner.traffic.IInnerTraffic
+import bumblebee.core.mqtt.store.IStore
 import bumblebee.core.security.AccessControl
 import bumblebee.core.security.IAuthManager
 import bumblebee.core.security.Permission

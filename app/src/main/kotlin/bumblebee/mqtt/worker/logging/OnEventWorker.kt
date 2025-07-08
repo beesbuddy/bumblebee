@@ -1,4 +1,4 @@
-package bumblebee.worker.logging
+package bumblebee.mqtt.worker.logging
 
 import bumblebee.core.config.WorkerConfig
 import bumblebee.core.event.message.mqtt.PublishEventMessage

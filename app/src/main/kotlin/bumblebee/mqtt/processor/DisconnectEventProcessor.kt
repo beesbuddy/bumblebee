@@ -2,6 +2,7 @@ package bumblebee.mqtt.processor
 
 import bumblebee.core.client.ClientSession
 import bumblebee.core.event.message.mqtt.DisconnectEventMessage
+import bumblebee.core.mqtt.store.IStore
 import bumblebee.core.store.mqtt.*
 import bumblebee.core.worker.EventsWorkersExecutor
 import bumblebee.core.worker.IEventsWorker

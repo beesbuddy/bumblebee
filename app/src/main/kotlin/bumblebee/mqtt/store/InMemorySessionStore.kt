@@ -1,7 +1,7 @@
 package bumblebee.mqtt.store
 
 import bumblebee.core.client.ClientSession
-import bumblebee.core.store.mqtt.ISessionStore
+import bumblebee.core.mqtt.store.ISessionStore
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.get
 

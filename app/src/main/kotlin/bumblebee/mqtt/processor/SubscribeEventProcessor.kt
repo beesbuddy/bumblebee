@@ -8,7 +8,7 @@ import bumblebee.core.worker.EventsWorkersExecutor
 import bumblebee.core.worker.IEventsWorker
 import bumblebee.core.security.IAuthManager
 import bumblebee.core.security.Permission
-import bumblebee.core.store.mqtt.IStore
+import bumblebee.core.mqtt.store.IStore
 import bumblebee.core.subscription.Subscription
 import bumblebee.core.util.MessageUtil
 import bumblebee.core.util.NettyUtil
@@ -42,7 +42,7 @@ class SubscribeEventProcessor(
             val mqttQoSList = ArrayList<Int>()
 
             topicSubList.forEach(Consumer { topicSub: MqttTopicSubscription ->
-                val topic: String = topicSub.topicName()
+                val topic: String = topicSub.topicFilter()
                 val userName: String = NettyUtil.userName(channel)
                 val remoteIp: String = NettyUtil.getRemoteIp(channel)
 
@@ -76,7 +76,7 @@ class SubscribeEventProcessor(
             })
 
             topicSubList.forEach(Consumer { topicSub: MqttTopicSubscription ->
-                val topic: String = topicSub.topicName()
+                val topic: String = topicSub.topicFilter()
                 val mqttQoS: MqttQoS = topicSub.qualityOfService()
                 sendRetainMessage(Subscription(clientId, topic, mqttQoS))
             })

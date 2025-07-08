@@ -2,7 +2,7 @@ package bumblebee.core
 
 import bumblebee.core.config.Config
 import bumblebee.core.event.message.mqtt.CommonPublishMessage
-import bumblebee.core.store.mqtt.IStore
+import bumblebee.core.mqtt.store.IStore
 import bumblebee.mqtt.processor.ConnectEventProcessor
 import bumblebee.mqtt.processor.DisconnectEventProcessor
 import bumblebee.mqtt.processor.PingReqEventProcessor
