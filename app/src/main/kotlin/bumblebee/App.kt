@@ -13,7 +13,6 @@ import bumblebee.core.security.token.AuthenticationTokenParser
 import bumblebee.core.security.token.AuthenticationTokenService
 import bumblebee.core.util.ConfigUtil
 import bumblebee.core.util.Stopwatch
-import bumblebee.db.DbProvider
 import bumblebee.http.HttpServer
 import bumblebee.mqtt.MQTTServer
 import com.github.ajalt.clikt.core.CliktCommand
@@ -23,9 +22,6 @@ import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.io.Encoders
 import io.jsonwebtoken.security.Keys
 import mu.KotlinLogging
-import org.jetbrains.exposed.v1.core.Table
-import org.jetbrains.exposed.v1.jdbc.SchemaUtils
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 private val log = KotlinLogging.logger {}
 
@@ -66,7 +62,7 @@ class App : CliktCommand() {
     override fun run() {
         val defaultConfig = Config()
 
-        val config = configPath?.let {
+        var config = configPath?.let {
             ConfigUtil.loadFromSystemProps(it, defaultConfig)
         } ?: ConfigUtil.loadFromSystemProps(
             classPath = "classpath://config.properties",
@@ -74,6 +70,8 @@ class App : CliktCommand() {
             targetType = Config::class.java,
             defaultValue = defaultConfig
         )
+
+        config = ConfigUtil.loadFromDatabase(config)
 
         val authManager = AuthManagerProvider.initialize(config.securityConfig)
 
@@ -120,20 +118,9 @@ class App : CliktCommand() {
     }
 }
 
-const val MAX_VARCHAR_LENGTH = 128
-
-object EventWorkers : Table("event_workers") {
-    val id = integer("id").autoIncrement()
-    val title = varchar("name", MAX_VARCHAR_LENGTH)
-    val description = varchar("description", MAX_VARCHAR_LENGTH)
-
-    override val primaryKey = PrimaryKey(id)
-}
-
 fun main(args: Array<String>) {
-    transaction(DbProvider.db) {
-        SchemaUtils.create(EventWorkers)
-    }
+//    runOneWayMigration()
+//    runDataSeed()
 
     val stopwatch: Stopwatch = Stopwatch.start()
     App().main(args)
