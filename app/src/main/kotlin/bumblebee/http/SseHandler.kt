@@ -1,17 +1,21 @@
 package bumblebee.http
 
 import bumblebee.core.Constants
-import bumblebee.core.MqttMessagesDispatcher
+import bumblebee.streams.MetricsStreamRegistry
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
-import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 
 private val log = KotlinLogging.logger {}
 
@@ -20,7 +24,7 @@ private val log = KotlinLogging.logger {}
 class SseHandler private constructor() : SimpleChannelInboundHandler<FullHttpRequest>() {
     private val routes: Map<String, (ChannelHandlerContext, FullHttpRequest) -> Unit> = mapOf(
         Constants.SSE_PATH to ::handleHealth,
-        "${Constants.SSE_PATH}/timestamp" to ::handleTimestamp
+        "${Constants.SSE_PATH}/metrics" to ::handleMetrics
     )
 
     override fun channelRead0(ctx: ChannelHandlerContext, request: FullHttpRequest) {
@@ -30,11 +34,8 @@ class SseHandler private constructor() : SimpleChannelInboundHandler<FullHttpReq
             val uri = request.uri()
             val decoder = QueryStringDecoder(uri)
             val path = decoder.path()
-//            val params = decoder.parameters()
-//            val q = params["q"]?.firstOrNull()
-//            val limit = params["limit"]?.firstOrNull()?.toIntOrNull()
-
             val handler = routes[path] ?: ::sendNotFound
+
             handler(ctx, request)
         }
     }
@@ -62,9 +63,9 @@ class SseHandler private constructor() : SimpleChannelInboundHandler<FullHttpReq
         private fun handleSysTopic(ctx: ChannelHandlerContext, request: FullHttpRequest) {
         }
 
-        private fun handleTimestamp(ctx: ChannelHandlerContext, request: FullHttpRequest) {
+        private fun handleMetrics(ctx: ChannelHandlerContext, request: FullHttpRequest) {
             val lastEventId = request.headers().get("Last-Event-ID")?.toLongOrNull()
-            log.info("Client last received event ID {0}, lastEventId")
+            log.info("Client last received event ID $lastEventId")
 
             val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
             response.headers().apply {
@@ -77,20 +78,37 @@ class SseHandler private constructor() : SimpleChannelInboundHandler<FullHttpReq
             ctx.write(response)
             ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
 
-            // Start sending events, using an event ID
-            val startId = (lastEventId ?: 0L) + 1
-            val scheduler = ctx.executor()
-            var eventId = startId
+            val uri = request.uri()
+            val decoder = QueryStringDecoder(uri)
+            val params = decoder.parameters()
+            val orgId = params["orgId"]?.firstOrNull()
 
-            scheduler.scheduleAtFixedRate({
-                if (ctx.channel().isActive) {
-                    val data = "id: $eventId\ndata: Event $eventId at ${System.currentTimeMillis()}\n\n"
-                    val content = Unpooled.copiedBuffer(data, CharsetUtil.UTF_8)
-                    val chunk = DefaultHttpContent(content)
-                    ctx.writeAndFlush(chunk)
-                    eventId++
+            if (null != orgId) {
+                val flow = MetricsStreamRegistry.getOrCreateFlow(orgId)
+
+                val job = CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        flow.collectLatest { data ->
+                            if (!ctx.channel().isActive) {
+                                this.cancel()
+                            }
+                            val content = Unpooled.copiedBuffer(data + "\n", CharsetUtil.UTF_8)
+                            val chunk = DefaultHttpContent(content)
+                            ctx.writeAndFlush(chunk)
+                        }
+                    } catch (_: CancellationException) {
+                        log.warn("SSE stream cancelled for org=$orgId")
+                    } catch (e: Throwable) {
+                        log.error("SSE error", e)
+                    } finally {
+                        ctx.close()
+                    }
                 }
-            }, 0, 2, TimeUnit.SECONDS)
+
+                ctx.channel().closeFuture().addListener {
+                    job.cancel()
+                }
+            }
         }
 
         @Suppress("UNUSED_PARAMETER")

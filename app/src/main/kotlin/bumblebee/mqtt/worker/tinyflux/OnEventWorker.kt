@@ -5,12 +5,18 @@ import bumblebee.core.event.message.mqtt.PublishEventMessage
 import bumblebee.core.util.MessageUtil
 import bumblebee.core.util.ScopeUtil
 import bumblebee.core.worker.IEventsWorker
+import bumblebee.streams.MetricsStreamRegistry
 import bumblebee.tinyflux.CsvUtils
 import bumblebee.tinyflux.TinyFlux
 import bumblebee.tinyflux.table.TableType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 import java.nio.file.Path
 import java.time.ZonedDateTime
+import kotlin.let
+
+import kotlinx.coroutines.launch
 
 private val log = KotlinLogging.logger {}
 
@@ -38,8 +44,13 @@ class OnEventWorker(val config: WorkerConfig) : IEventsWorker {
                     )
                 ) {
                     val payload = String(MessageUtil.readBytesAndRewind(it.payload))
-                    CsvUtils.decodeRow("${ZonedDateTime.now()},$payload")?.let { p ->
+                    val time = ZonedDateTime.now()
+                    CsvUtils.decodeRow("${time},$payload")?.let { p ->
                         client?.insert(p)
+
+                        CoroutineScope(Dispatchers.IO).launch {
+                            MetricsStreamRegistry.getOrCreateFlow(c.organization!!).emit("${time},$payload")
+                        }
                     }
                 }
             }
