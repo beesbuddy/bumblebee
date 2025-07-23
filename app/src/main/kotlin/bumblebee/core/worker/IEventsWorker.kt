@@ -10,7 +10,7 @@ interface IEventsWorker: AutoCloseable {
         @Volatile
         private var instance: List<IEventsWorker>? = null
 
-        fun getInstance(listenersClassNames: List<String>, workerConfig: WorkerConfig): List<IEventsWorker>? {
+        fun getInstance(workers: List<WorkerConfig>): List<IEventsWorker>? {
             if (instance != null) {
                 return instance!!
             }
@@ -20,12 +20,23 @@ interface IEventsWorker: AutoCloseable {
                     instance!!
                 } else {
 
-                    return listenersClassNames.map {
-                        ClassLoaderUtil
-                            .loadClass(it)
-                            .asSubclass(IEventsWorker::class.java)
-                            .getConstructor(WorkerConfig::class.java)
-                            .newInstance(workerConfig)
+                    return workers.mapNotNull {
+                        workerConfig ->
+                        workerConfig.tinyFluxConfig?.let {
+                            return@mapNotNull ClassLoaderUtil
+                                .loadClass(it.className)
+                                .asSubclass(IEventsWorker::class.java)
+                                .getConstructor(WorkerConfig::class.java)
+                                .newInstance(workerConfig)
+                        }
+
+                        workerConfig.loggingConfig?.let {
+                            return@mapNotNull ClassLoaderUtil
+                                .loadClass(it.className)
+                                .asSubclass(IEventsWorker::class.java)
+                                .getConstructor(WorkerConfig::class.java)
+                                .newInstance(workers)
+                        }
                     }
                 }
             }

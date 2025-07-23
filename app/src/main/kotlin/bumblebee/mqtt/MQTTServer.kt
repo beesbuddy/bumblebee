@@ -208,8 +208,7 @@ class MQTTServer(
             )
 
             val eventsListeners = IEventsWorker.getInstance(
-                listenersClassNames = config.mqttConfig.onEventWorkers ?: listOf(),
-                workerConfig = config.workerConfig
+                workers = config.workers
             )
             val eventsWorkersExecutor = eventsListeners?.let { EventsWorkersExecutor(it) }
 

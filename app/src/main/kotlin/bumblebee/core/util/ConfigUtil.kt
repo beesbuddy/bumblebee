@@ -2,6 +2,9 @@ package bumblebee.core.util
 
 import bumblebee.core.Constants
 import bumblebee.core.config.Config
+import bumblebee.core.config.LoggingConfig
+import bumblebee.core.config.TinyFluxConfig
+import bumblebee.core.config.WorkerConfig
 import bumblebee.core.security.AccessControl
 import bumblebee.core.security.AccessControl.Type
 import bumblebee.core.security.Permission
@@ -9,6 +12,7 @@ import bumblebee.core.security.Role
 import bumblebee.core.security.User
 import bumblebee.db.Acls
 import bumblebee.db.DbProvider
+import bumblebee.db.EventWorkers
 import bumblebee.db.Roles
 import bumblebee.db.Users
 import cn.hutool.core.util.CharsetUtil
@@ -18,13 +22,12 @@ import okhttp3.internal.toImmutableList
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import kotlin.collections.get
 
 
 object ConfigUtil {
-    fun loadFromSystemProps(configFilePath: String, defaultConfig: Config): Config {
+    fun loadFromSystemProps(configFilePath: String, initialConfig: Config): Config {
         if (StrUtil.isBlank(configFilePath)) {
-            return defaultConfig
+            return initialConfig
         }
 
         val props = Props.getProp(configFilePath, CharsetUtil.CHARSET_UTF_8)
@@ -45,7 +48,7 @@ object ConfigUtil {
         } else props.toBean(targetType, prefix)
     }
 
-    fun loadFromDatabase(defaultConfig: Config = Config()): Config {
+    fun loadUsersFromDatabase(initialConfig: Config = Config()): Config {
         return transaction(DbProvider.db) {
             val query = Users
                 .join(Roles, JoinType.INNER, Users.roleName, Roles.name)
@@ -74,10 +77,33 @@ object ConfigUtil {
                 ))
             }.toImmutableList()
 
-            defaultConfig.securityConfig.users = users as MutableList<User?>?
+            initialConfig.securityConfig.users = users as MutableList<User?>?
 
 
-            return@transaction defaultConfig
+            return@transaction initialConfig
+        }
+    }
+
+    fun loadEventWorkersFromDatabase(initialConfig: Config = Config()): Config {
+        return transaction(DbProvider.db) {
+            val workers: List<WorkerConfig> = EventWorkers.selectAll()
+                .mapNotNull {
+                    when (it[EventWorkers.className]) {
+                        "bumblebee.mqtt.worker.tinyflux.OnEventWorker" -> WorkerConfig(
+                            tinyFluxConfig = TinyFluxConfig(it[EventWorkers.organizationId])
+                        )
+
+                        "bumblebee.mqtt.worker.logging.OnEventWorker" -> WorkerConfig(
+                            loggingConfig = LoggingConfig()
+                        )
+
+                        else -> null // Skip unknown classes
+                    }
+                }
+
+            initialConfig.workers = workers
+
+            initialConfig
         }
     }
 }

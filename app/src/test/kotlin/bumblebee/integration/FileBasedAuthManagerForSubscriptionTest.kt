@@ -3,6 +3,7 @@ package bumblebee.integration
 import bumblebee.mqtt.MQTTServer
 import bumblebee.core.Constants
 import bumblebee.core.config.Config
+import bumblebee.core.config.MqttConfig
 import bumblebee.core.config.SecurityConfig
 import bumblebee.core.inner.traffic.NoopInnerTraffic
 import bumblebee.core.security.*
@@ -47,6 +48,7 @@ object FileBasedAuthManagerForSubscriptionTest {
 
 
         val config = Config(
+            mqttConfig = MqttConfig(onEventWorkers = listOf()),
             securityConfig = SecurityConfig(
                 users = users.toMutableList(),
                 authManagerClass = Constants.AUTH_MANAGER_FILE_BASED_CLASSNAME

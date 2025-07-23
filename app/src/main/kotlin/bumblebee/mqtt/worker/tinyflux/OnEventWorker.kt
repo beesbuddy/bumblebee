@@ -18,8 +18,10 @@ private val log = KotlinLogging.logger {}
 // TODO: Pass auth manager.
 class OnEventWorker(val config: WorkerConfig) : IEventsWorker {
     val client: TinyFlux? by lazy {
-        config.tinyFluxConfig?.organization?.let {
-            TinyFlux.getInstance(TableType.CSV, it, Path.of(it))
+        if (null != config.tinyFluxConfig?.organization && null != config.tinyFluxConfig?.path) {
+            TinyFlux.getInstance(TableType.CSV, config.tinyFluxConfig!!.organization!!, Path.of(config.tinyFluxConfig!!.path!!))
+        } else {
+            null
         }
     }
 

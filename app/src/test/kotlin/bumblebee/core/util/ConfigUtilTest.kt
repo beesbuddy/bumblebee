@@ -11,7 +11,7 @@ class ConfigUtilTest {
     @Test
     fun loadFromSystemProps_whenPathKeyIsEmpty_returnDefaultConfiguration() {
         val expected = Config(null);
-        val actual = ConfigUtil.loadFromSystemProps(configFilePath = "", defaultConfig = expected)
+        val actual = ConfigUtil.loadFromSystemProps(configFilePath = "", initialConfig = expected)
 
         assertEquals(expected, actual)
     }

@@ -13,6 +13,8 @@ import bumblebee.core.security.token.AuthenticationTokenParser
 import bumblebee.core.security.token.AuthenticationTokenService
 import bumblebee.core.util.ConfigUtil
 import bumblebee.core.util.Stopwatch
+import bumblebee.db.runDataSeed
+import bumblebee.db.runOneWayMigration
 import bumblebee.http.HttpServer
 import bumblebee.mqtt.MQTTServer
 import com.github.ajalt.clikt.core.CliktCommand
@@ -35,7 +37,15 @@ class App : CliktCommand() {
         "--admin",
         help = "enable administration dashboard"
     ).flag(default = true)
-    private val generateSecret by option("-s", "--secret", help = "generates secret to be used with jwt token").flag(
+    private val generateSecret by option("-g", "--generate-secret", help = "generates secret to be used with jwt token").flag(
+        default = false
+    )
+
+    private val oneWayMigrate by option("-m", "--migrate", help = "migrate database inb one way").flag(
+        default = false
+    )
+
+    private val seedDatabase by option("-s", "--seed", help = "seed database").flag(
         default = false
     )
 
@@ -71,7 +81,8 @@ class App : CliktCommand() {
             defaultValue = defaultConfig
         )
 
-        config = ConfigUtil.loadFromDatabase(config)
+        config = ConfigUtil.loadUsersFromDatabase(config)
+        config = ConfigUtil.loadEventWorkersFromDatabase(config)
 
         val authManager = AuthManagerProvider.initialize(config.securityConfig)
 
@@ -107,6 +118,14 @@ class App : CliktCommand() {
             return
         }
 
+        if (oneWayMigrate) {
+            runOneWayMigration()
+        }
+
+        if (seedDatabase) {
+            runDataSeed()
+        }
+
         startBroker(
             config,
             authManager,
@@ -119,9 +138,6 @@ class App : CliktCommand() {
 }
 
 fun main(args: Array<String>) {
-//    runOneWayMigration()
-//    runDataSeed()
-
     val stopwatch: Stopwatch = Stopwatch.start()
     App().main(args)
     stopwatch.stop()

@@ -17,6 +17,7 @@ object Constants {
     const val DEFAULT_MQTT_STORE_CLASSNAME = "bumblebee.mqtt.store.InMemoryStore"
     const val DEFAULT_WEBSOCKET_PATH = "/mqtt"
     const val DEFAULT_PAYLOAD_LOGGING_PATH = "./"
+    const val DEFAULT_TINYFLUX_PATH = "./data"
 
     const val TMP_NAME = "tmp"
 
