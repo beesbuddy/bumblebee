@@ -21,7 +21,7 @@
         "calva.replConnectSequences": [
           {
             "name": "BumbleBee",
-            "projectType": "lein",
+            "projectType": "Leiningen",
             "cljsType": "none",
             "nReplPortFile": [
               ".nrepl-port"
