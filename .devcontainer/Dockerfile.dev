@@ -14,6 +14,6 @@ RUN curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
 
 # Add leiningen
 RUN curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein \
-  && mv lein /usr/local/bin/lein
-  && sudo chmod a+x /usr/local/bin/lein --static
+  && mv lein /usr/local/bin/lein \
+  && chmod a+x /usr/local/bin/lein
 
