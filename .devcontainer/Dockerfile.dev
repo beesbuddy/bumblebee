@@ -1,4 +1,4 @@
-FROM clojure:temurin-24-lein-trixie-slim
+FROM clojure:tools-deps-trixie-slim
 
 # Extra tools
 RUN apt-get update && apt-get install -y gpg curl
