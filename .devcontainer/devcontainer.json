@@ -15,7 +15,9 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "betterthantomorrow.calva"
+        "betterthantomorrow.calva",
+        "betterthantomorrow.calva-backseat-driver",
+        "betterthantomorrow.calva-power-tools"
       ],
       "settings": {
         "calva.replConnectSequences": [
