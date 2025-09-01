@@ -1,5 +1,5 @@
 {
-  "name": "Clojure kit tutorial",
+  "name": "BumbleBee",
   "build": {
     "dockerfile": "Dockerfile.dev"
   },
@@ -20,8 +20,8 @@
       "settings": {
         "calva.replConnectSequences": [
           {
-            "name": "Kit-Clj Guestbook Tutorial",
-            "projectType": "deps.edn",
+            "name": "BumbleBee",
+            "projectType": "lein",
             "cljsType": "none",
             "nReplPortFile": [
               ".nrepl-port"
