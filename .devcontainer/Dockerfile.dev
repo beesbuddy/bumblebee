@@ -1,8 +1,4 @@
-FROM clojure:temurin-20-tools-deps-jammy
-# Details as of 2023-09-19:
-# Ubuntu: Ubuntu 22.04 LTS (Jammy Jellyfish)
-# JDK: eclipse-temurin 20
-# Clojure: tools-deps, 1.11.1.1347
+FROM clojure:temurin-24-lein-trixie-slim
 
 # Extra tools
 RUN apt-get update && apt-get install -y gpg curl
