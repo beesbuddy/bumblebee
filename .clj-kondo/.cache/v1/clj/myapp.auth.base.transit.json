@@ -1,0 +1,1 @@
+["^ ","~$authenticate",["^ ","~:row",8,"~:col",3,"~:fixed-arities",["~#set",[2]],"~:name","^0","~:ns","~$myapp.auth.base","~:top-ns","~$bumblebee.auth"],"~$Auth",["^ ","^1",7,"^2",1,"^5","^:","^6","^7","^8","^9","~:methods",["^0"]],"~:filename","/home/viktorn/Workspace/clojure/bumblebee/src/clojure/bumblebee/auth.clj"]

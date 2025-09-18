@@ -1,0 +1,16 @@
+{:lein true
+ :dependencies []
+ :dev-http {8020 "resources/public"}
+ :builds
+ {:app
+  {:target :browser
+   :output-dir "resources/public/js"
+   :asset-path "/js"
+   :modules {:main {:entries [bumblebee.ui.core]
+                    :init-fn bumblebee.ui.core/init}}
+   :devtools {:after-load bumblebee.ui.core/init}
+   :compiler-options {:infer-externs :auto}}
+  :test
+  {:target :node-test
+   :output-to "target/test.js"
+   :autorun true}}}

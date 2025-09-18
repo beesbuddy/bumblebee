@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Leiningen: ring-request-proxy:0.1.11">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/ring-request-proxy/ring-request-proxy/0.1.11/ring-request-proxy-0.1.11.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

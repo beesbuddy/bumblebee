@@ -1,0 +1,1 @@
+["^ ","~$init-channel",["^ ","~:row",8,"~:col",1,"~:fixed-arities",["~#set",[0]],"~:name","^0","~:ns","~$.channel-initializer","~:top-ns","^7","~:type","~:fn"],"~:filename","/home/viktornar/Workspace/last-projects/bumblebee/src/clojure/bumblebee/mqtt/channel_initializer.clj"]

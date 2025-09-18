@@ -1,0 +1,23 @@
+{
+  "name": "uix-starter-lein-jwt-refresh",
+  "private": true,
+  "version": "0.8.0",
+  "scripts": {
+    "dev": "shadow-cljs watch app",
+    "build": "shadow-cljs release app",
+    "test:watch": "shadow-cljs watch test",
+    "test:ci": "shadow-cljs run :test",
+    "css:watch": "tailwindcss -i ./resources/public/input.css -o ./resources/public/dist/output.css --watch",
+    "css:build": "tailwindcss -i ./resources/public/input.css -o ./resources/public/dist/output.css --minify"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "tailwindcss": "^3.4.4"
+  },
+  "devDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-refresh": "^0.14.2",
+    "shadow-cljs": "3.2.0"
+  }
+}

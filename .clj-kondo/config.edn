@@ -1,0 +1,6 @@
+{:config-paths ["com.pitch/uix.core" "com.pitch/uix.dom" "metosin/malli"]
+ :lint-as
+ {bumblebee.mqtt.filters/deffilter clojure.core/def}
+ :hooks
+ {:analyze-call
+  {bumblebee.registry/defregistry hooks.bumblebee.registry/defregistry}}}
