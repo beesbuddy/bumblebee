@@ -15,11 +15,13 @@
   "Return a storage instance for the given config. Memoizes a singleton in
   `instance`. Use `close-instance!` to dispose and reset the memoized instance."
   (fn [config] (-> config :mqtt-config :storage-provider)))
+
 (defmethod get-instance :memory [config]
   (when-not (cfg/valid? config)
     (throw (ex-info "Invalid configuration" {:config config})))
   (or @instance
       (reset! instance (make-memory-instance config))))
+
 (defmethod get-instance :sqlite [config]
   (if (cfg/valid? config)
     (throw (ex-info "Not implemented for given type" {:type :sqlite}))
