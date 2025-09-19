@@ -1,7 +1,8 @@
 (ns bumblebee.mqtt.store.in-memory-retain-store
   (:require
    [clojure.string :as str]
-   [bumblebee.mqtt.core :as core]))
+   [bumblebee.mqtt.core :as core]
+   [bumblebee.mqtt.util :as util]))
 
 (defn- split-topic [topic]
   (if (str/blank? topic)
@@ -40,7 +41,7 @@
 
 (comment
   (let [store (init)
-        msg (core/make-common-publish-message :topic "sensors/1" :message-body "hi" :mqtt-qos 0)]
+        msg (util/make-common-publish-message :topic "sensors/1" :message-body "hi" :mqtt-qos 0)]
     (core/add-retain store msg)
     (core/match-retains store "sensors/1")
     (core/match-retains store "sensors/#")

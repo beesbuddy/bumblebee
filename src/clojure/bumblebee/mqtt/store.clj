@@ -9,7 +9,7 @@
   (atom nil))
 
 (defn- make-memory-instance [config]
-  (messages-store/new-in-memory-message-store config (messages-id-store/new-in-memory-message-id-store config)))
+  (messages-store/init config (messages-id-store/init config)))
 
 (defmulti get-instance
   "Return a storage instance for the given config. Memoizes a singleton in

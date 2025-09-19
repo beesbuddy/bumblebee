@@ -1,7 +1,6 @@
 (ns bumblebee.mqtt.handlers.disconnect-event-handler
   (:require [bumblebee.mqtt.util :as util]
-            [bumblebee.mqtt.core :as core]
-            [bumblebee.mqtt.store.in-memory-subscription-store :as subs])
+            [bumblebee.mqtt.core :as core])
   (:import
     [io.netty.channel ChannelHandlerContext]
     [io.netty.handler.codec.mqtt MqttMessage]
@@ -30,7 +29,7 @@
           (do
             (when (core/clean-session? client-session)
               (when subscriptions
-                (subs/remove-all-subscriptions subscriptions client-id))
+                (core/remove-all-subscriptions subscriptions client-id))
               (when dup-store
                 (core/remove-all-dup-pub-messages dup-store client-id)))
             (core/close-channel client-session)

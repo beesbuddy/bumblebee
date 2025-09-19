@@ -1,5 +1,6 @@
 (ns bumblebee.mqtt.store.in-memory-dup-pub-messages-store
-  (:require [bumblebee.mqtt.core :as core]))
+  (:require [bumblebee.mqtt.core :as core]
+            [bumblebee.mqtt.util :as util]))
 
 (defn init []
   (let [message-cache (atom {})]
@@ -33,8 +34,8 @@
 
 (comment
   (def in-memory-dup-pub-message-store (init))
-  (def common-pub-message-1 (core/make-common-publish-message :target-client-id "test" :message-id 1))
-  (def common-pub-message-2 (core/make-common-publish-message :target-client-id "test" :message-id 2))
+  (def common-pub-message-1 (util/make-common-publish-message :target-client-id "test" :message-id 1))
+  (def common-pub-message-2 (util/make-common-publish-message :target-client-id "test" :message-id 2))
 
   (core/add-dup-pub-message in-memory-dup-pub-message-store common-pub-message-1)
   (core/add-dup-pub-message in-memory-dup-pub-message-store common-pub-message-2)

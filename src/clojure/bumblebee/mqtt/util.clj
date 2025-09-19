@@ -3,7 +3,10 @@
    [clojure.spec.alpha :as s])
   (:import
    [java.net InetSocketAddress]
-   [io.netty.buffer ByteBuf]
+   [java.nio.charset StandardCharsets]
+   [java.time LocalDateTime]
+   [java.time.format DateTimeFormatter]
+   [io.netty.buffer ByteBuf Unpooled]
    [io.netty.channel Channel ChannelHandlerContext SimpleChannelInboundHandler]
    [io.netty.channel.embedded EmbeddedChannel]
    [io.netty.util AttributeKey]
@@ -17,6 +20,8 @@
     MqttMessageIdVariableHeader
     MqttMessageType
     MqttPubAckMessage
+    MqttPublishMessage
+    MqttPublishVariableHeader
     MqttQoS
     MqttSubAckMessage
     MqttSubAckPayload
@@ -46,6 +51,62 @@
 ;; -----------------------------------------------------------------------------
 ;; MQTT message helpers (idiomatic Clojure ports of the original Kotlin)
 ;; -----------------------------------------------------------------------------
+
+(def ^:private time-formatter (DateTimeFormatter/ofPattern "yyyyMMddHHmmss"))
+
+(defrecord CommonPublishMessage [target-client-id topic message-id message-body mqtt-qos is-retain is-will create-time source-node-name])
+
+(defn- now-str []
+  (.format (LocalDateTime/now) time-formatter))
+
+(defn copy-common-publish-message
+  "Return a shallow copy of `msg` as `CommonPublishMessage`. Accepts optional
+  overrides via key/value pairs."
+  ([msg]
+   (map->CommonPublishMessage (into {} msg)))
+  ([msg & kvs]
+   (map->CommonPublishMessage (merge (into {} msg) (apply hash-map kvs)))))
+
+(defn read-bytes-and-rewind
+  "Read all readable bytes from a ByteBuf and reset reader index."
+  [^ByteBuf payload]
+  (let [len  (.readableBytes payload)
+        mark (.readerIndex payload)
+        out  (byte-array len)]
+    (.readBytes payload out)
+    (.readerIndex payload mark)
+    out))
+
+(defn mqtt-msg->comm-pub-msg [message is-will source-node-name]
+  (let [payload-bytes (read-bytes-and-rewind (.payload message))
+        payload-str (when payload-bytes (String. ^bytes payload-bytes StandardCharsets/UTF_8))]
+    (->CommonPublishMessage
+     nil
+     (-> message (.variableHeader) (.topicName))
+     (-> message (.variableHeader) (.packetId))
+     payload-str
+     (-> message (.fixedHeader) (.qosLevel) (.value))
+     (-> message (.fixedHeader) (.isRetain))
+     is-will
+     (now-str)
+     source-node-name)))
+
+(defn make-common-publish-message
+  [& {:keys [target-client-id topic message-id message-body mqtt-qos is-retain is-will create-time source-node-name]
+      :or {create-time (now-str)}}]
+  (->CommonPublishMessage target-client-id topic message-id message-body mqtt-qos is-retain is-will create-time source-node-name))
+
+(defn build-publish-message
+  "Create an `MqttPublishMessage` from `CommonPublishMessage` using the
+  provided QoS (enum) and message-id integer."
+  [^CommonPublishMessage msg ^MqttQoS qos message-id]
+  (let [fixed-header (MqttFixedHeader. MqttMessageType/PUBLISH false qos (boolean (:is-retain msg)) 0)
+        variable-header (MqttPublishVariableHeader. (:topic msg) (int message-id))
+        payload-bytes (if-let [body (:message-body msg)]
+                        (.getBytes ^String body StandardCharsets/UTF_8)
+                        (byte-array 0))]
+    (MqttPublishMessage. fixed-header variable-header (doto (Unpooled/buffer (alength ^bytes payload-bytes))
+                                                      (.writeBytes ^bytes payload-bytes)))))
 
 ;; Netty channel attribute helpers (ported from Kotlin NettyUtil)
 (def ^AttributeKey ATTR-CLIENT-ID (AttributeKey/valueOf "clientId"))
@@ -155,16 +216,6 @@
   []
   (let [fixed-header (MqttFixedHeader. MqttMessageType/PINGRESP false MqttQoS/AT_MOST_ONCE false 0)]
     (MqttMessage. fixed-header)))
-
-(defn read-bytes-and-rewind
-  "Read all readable bytes from a ByteBuf and reset reader index."
-  [^ByteBuf payload]
-  (let [len  (.readableBytes payload)
-        mark (.readerIndex payload)
-        out  (byte-array len)]
-    (.readBytes payload out)
-    (.readerIndex payload mark)
-    out))
 
 (defn copy-bytes
   "Return a shallow copy of the given byte array."

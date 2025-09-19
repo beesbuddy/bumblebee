@@ -11,21 +11,21 @@
   (close [_] (core/close message-id-store)))
 
 ;; Initialization helpers (positional arities)
-(defn new-in-memory-message-store
+(defn init
   ;; No args: create default config and ID store
   ([]
    (let [config {}
-         id-store (messages-id-storage/new-in-memory-message-id-store config)]
+         id-store (messages-id-storage/init config)]
      (->InMemoryMessagesStore config id-store)))
   ;; One arg: config only, create ID store
   ([config]
-   (->InMemoryMessagesStore config (messages-id-storage/new-in-memory-message-id-store config)))
+   (->InMemoryMessagesStore config (messages-id-storage/init config)))
   ;; Two args: config and explicit ID store
   ([config message-id-store]
    (->InMemoryMessagesStore config message-id-store)))
 
 (comment 
-  (def in-memory-messages-storage (new-in-memory-message-store {:test ""}))
+  (def in-memory-messages-storage (init {:test ""}))
   ;; (core/get-next-message-id in-memory-messages-storage nil)
   ;; (core/get-next-message-id in-memory-messages-storage "client-a")
   (core/close in-memory-messages-storage))

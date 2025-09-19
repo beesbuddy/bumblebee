@@ -1,55 +1,10 @@
 (ns bumblebee.mqtt.store.in-memory-subscription-store
   (:require
-   [clojure.set :as set]
-   [clojure.string :as str]))
-
-(defn init []
-  ;; Two indexes:
-  ;; - topics -> {topic {client-id -> subscription}}
-  ;; - clients -> set of topic strings
-  {:topics  (atom {})
-   :clients (atom {})})
+   [clojure.string :as str]
+   [bumblebee.mqtt.core :as core]))
 
 (defn- add-to-set [s v]
   (if (contains? s v) s (conj s v)))
-
-(defn add-subscription [store sub]
-  (let [topic (:topic sub)
-        client-id (:client-id sub)
-        updated (swap! (:topics store)
-                       (fn [m]
-                         (update m topic (fnil assoc {}) client-id sub)))
-        added? (= (get-in updated [topic client-id]) sub)]
-    (swap! (:clients store)
-           (fn [m]
-             (update m client-id (fnil add-to-set #{}) topic)))
-    added?))
-
-(defn remove-subscription [store sub]
-  (let [topic (:topic sub)
-        client-id (:client-id sub)]
-    (swap! (:topics store)
-           (fn [m]
-             (let [cur (get m topic {})
-                   nxt (dissoc cur client-id)]
-               (if (empty? nxt) (dissoc m topic) (assoc m topic nxt)))))
-    (swap! (:clients store)
-           (fn [m]
-             (let [cur (get m client-id #{})
-                   nxt (disj cur topic)]
-               (if (empty? nxt) (dissoc m client-id) (assoc m client-id nxt)))))
-    true))
-
-(defn remove-all-subscriptions [store client-id]
-  (let [topics (get @(:clients store) client-id #{})]
-    (doseq [t topics]
-      (swap! (:topics store)
-             (fn [m]
-               (let [cur (get m t {})
-                     nxt (dissoc cur client-id)]
-                 (if (empty? nxt) (dissoc m t) (assoc m t nxt))))))
-    (swap! (:clients store) dissoc client-id)
-    true))
 
 (defn- match-topic?
   "Simple MQTT wildcard matching supporting + and #."
@@ -65,9 +20,55 @@
         (= (first f) (first t)) (recur (rest f) (rest t))
         :else false))))
 
-(defn match-subscriptions [store ^String topic]
-  (let [by-topic @(:topics store)]
-    (vec (mapcat (fn [[t subs-by-client]]
-                   (when (match-topic? t topic)
-                     (vals subs-by-client)))
-                 by-topic))))
+(deftype InMemorySubscriptionStore [^clojure.lang.Atom topics ^clojure.lang.Atom clients]
+  core/ISubscriptionStore
+  (add-subscription [_ sub]
+    (let [topic (:topic sub)
+          client-id (:client-id sub)
+          updated (swap! topics
+                         (fn [m]
+                           (update m topic (fnil assoc {}) client-id sub)))
+          added? (= (get-in updated [topic client-id]) sub)]
+      (swap! clients
+             (fn [m]
+               (update m client-id (fnil add-to-set #{}) topic)))
+      added?))
+
+  (remove-subscription [_ sub]
+    (let [topic (:topic sub)
+          client-id (:client-id sub)]
+      (swap! topics
+             (fn [m]
+               (let [cur (get m topic {})
+                     nxt (dissoc cur client-id)]
+                 (if (empty? nxt) (dissoc m topic) (assoc m topic nxt)))))
+      (swap! clients
+             (fn [m]
+               (let [cur (get m client-id #{})
+                     nxt (disj cur topic)]
+                 (if (empty? nxt) (dissoc m client-id) (assoc m client-id nxt)))))
+      true))
+
+  (remove-all-subscriptions [_ client-id]
+    (let [client-topics (get @clients client-id #{})]
+      (doseq [topic client-topics]
+        (swap! topics
+               (fn [m]
+                 (let [cur (get m topic {})
+                       nxt (dissoc cur client-id)]
+                   (if (empty? nxt) (dissoc m topic) (assoc m topic nxt))))))
+      (swap! clients dissoc client-id)
+      true))
+
+  (match-subscriptions [_ topic]
+    (let [by-topic @topics]
+      (vec (mapcat (fn [[stored-topic subs-by-client]]
+                     (when (match-topic? stored-topic topic)
+                       (vals subs-by-client)))
+                   by-topic))))
+
+  core/ICloseableStore
+  (close [_]))
+
+(defn init []
+  (->InMemorySubscriptionStore (atom {}) (atom {})))

@@ -2,7 +2,6 @@
   (:require
    [clojure.string :as str]
    [bumblebee.mqtt.core :as core]
-   [bumblebee.mqtt.store.in-memory-subscription-store :as subs]
    [bumblebee.mqtt.util :as util])
   (:import
    [io.netty.channel ChannelHandlerContext]
@@ -20,7 +19,7 @@
   [dup-store pub-msg target-client-id message-id]
   (when dup-store
     (core/add-dup-pub-message dup-store
-                              (core/copy-common-publish-message
+                              (util/copy-common-publish-message
                                pub-msg
                                :target-client-id target-client-id
                                :message-id message-id))))
@@ -30,14 +29,14 @@
   (let [target-client-id (:client-id sub)
         session (core/get-session session-store target-client-id)]
     (when session
-      (let [msg-for-target (core/copy-common-publish-message pub-msg :target-client-id target-client-id)
+      (let [msg-for-target (util/copy-common-publish-message pub-msg :target-client-id target-client-id)
             qos (effective-qos msg-for-target sub)
             qos-level (.value qos)
             has-message-id? (and (pos? qos-level) message-id-store)
             message-id (if has-message-id?
                          (core/get-next-message-id message-id-store target-client-id)
                          0)
-            publish-msg (core/build-publish-message msg-for-target qos message-id)]
+            publish-msg (util/build-publish-message msg-for-target qos message-id)]
         (when has-message-id?
           (store-dup-message! dup-store msg-for-target target-client-id message-id))
         (let [write-future (core/send-msg session publish-msg)]
@@ -52,7 +51,7 @@
 (defn- publish-to-subscribers!
   [subscription-store session-store dup-store message-id-store pub-msg]
   (let [matches (when subscription-store
-                  (subs/match-subscriptions subscription-store (:topic pub-msg)))]
+                  (core/match-subscriptions subscription-store (:topic pub-msg)))]
     (doseq [sub matches :when sub]
       (publish-to-subscriber! session-store dup-store message-id-store pub-msg sub))))
 
@@ -62,13 +61,13 @@
     (let [body (:message-body pub-msg)]
       (cond
         (:is-will pub-msg)
-        (core/add-retain retain-store (core/copy-common-publish-message pub-msg))
+        (core/add-retain retain-store (util/copy-common-publish-message pub-msg))
 
         (or (nil? body) (str/blank? body))
         (core/remove-retain retain-store (:topic pub-msg))
 
         :else
-        (core/add-retain retain-store (core/copy-common-publish-message pub-msg))))))
+        (core/add-retain retain-store (util/copy-common-publish-message pub-msg))))))
 
 (defn publish-event-handler
   "Handle inbound MQTT PUBLISH message."
@@ -79,7 +78,7 @@
         message-id-store (:message-id-store mqtt-store)
         retain-store (:retain-store mqtt-store)
         node-name (:node-name mqtt-store)
-        pub-msg (core/mqtt-msg->comm-pub-msg msg false node-name)
+        pub-msg (util/mqtt-msg->comm-pub-msg msg false node-name)
         packet-id (.. msg variableHeader packetId)
         inbound-qos (int (:mqtt-qos pub-msg))]
     (publish-to-subscribers! subscription-store session-store dup-store message-id-store pub-msg)

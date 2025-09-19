@@ -65,7 +65,7 @@
                                 :stores {:session-store (sess/init)
                                          :subscription-store (subs/init)
                                          :dup-pub-store (dup/init)
-                                         :message-id-store (mid/new-in-memory-message-id-store)
+                                         :message-id-store (mid/init)
                                          :retain-store (retain/init)}
                                 :connect-event-processor connect/connect-event-handler
                                 :disconnect-event-processor disconnect/disconnect-event-handler
@@ -76,7 +76,7 @@
              stores {:session-store (sess/init)
                       :subscription-store (subs/init)
                       :dup-pub-store (dup/init)
-                      :message-id-store (mid/new-in-memory-message-id-store)
+                      :message-id-store (mid/init)
                       :retain-store (retain/init)}
              connect-event-processor connect/connect-event-handler
              disconnect-event-processor disconnect/disconnect-event-handler

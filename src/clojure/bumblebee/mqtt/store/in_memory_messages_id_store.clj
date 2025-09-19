@@ -31,12 +31,12 @@
   (close [_]
     (print (str "On in memory messages id storage close with config: " config))))
 
-(defn new-in-memory-message-id-store
+(defn init
   ([] (InMemoryMessagesIdStore. {} (atom {})))
   ([config] (InMemoryMessagesIdStore. config (atom {}))))
 
 (comment
-  (def in-memory-messages-id-storage (new-in-memory-message-id-store))
+  (def in-memory-messages-id-storage (init))
   ;; (repeatedly 5 #(c/get-next-message-id in-memory-messages-id-storage nil))
   ;; (repeatedly 5 #(c/get-next-message-id in-memory-messages-id-storage "client-42"))
   (c/close in-memory-messages-id-storage))

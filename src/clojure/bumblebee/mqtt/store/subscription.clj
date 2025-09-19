@@ -1,4 +1,4 @@
-(ns bumblebee.core.subscription
+(ns bumblebee.mqtt.store.subscription
   (:import [io.netty.handler.codec.mqtt MqttQoS]))
 
 (defrecord Subscription

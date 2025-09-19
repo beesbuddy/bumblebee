@@ -67,7 +67,7 @@
          stores {:session-store (sess/init)
                  :subscription-store (subs/init)
                  :dup-pub-store (dup/init)
-                 :message-id-store (mid/new-in-memory-message-id-store)
+                 :message-id-store (mid/init)
                  :retain-store (retain/init)
                  :node-name (-> config :mqtt-config :node-name)}
          _ (when (seq (get-in config [:mqtt-config :filters]))
