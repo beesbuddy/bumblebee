@@ -103,5 +103,5 @@
         (is (instance? bumblebee.mqtt.util.CommonPublishMessage msg))
         (is (= true (:is-will msg)))
         ;; The implementation should override create-time with session's create-time
-        (is (= "T" (:create-time msg))))))
-  )
+        (is (= "T" (:create-time msg)))))))
+

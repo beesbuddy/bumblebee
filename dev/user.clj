@@ -274,3 +274,60 @@
   (mqtt-start!)
   (mqtt-stop!)
   (inspect-client-connect! {:ssl? true}))
+
+
+
+
+(comment
+  (require
+   '[bumblebee.mqtt.system :as system]
+   '[bumblebee.mqtt.store.in-memory-session-store :as sess]
+   '[bumblebee.mqtt.store.in-memory-subscription-store :as subs]
+   '[bumblebee.mqtt.store.in-memory-dup-pub-messages-store :as dup]
+   '[bumblebee.mqtt.store.in-memory-messages-id-store :as mid]
+   '[bumblebee.mqtt.store.in-memory-retain-store :as retain])
+  
+  (let [stores {:session-store (sess/init)
+                :subscription-store (subs/init)
+                :dup-pub-store (dup/init)
+                :message-id-store (mid/init)
+                :retain-store (retain/init)
+                :node-name "node-1"}]
+    (with-redefs [system/publish-metrics! (fn [_]
+                                            (println "publishing...")
+                                            (throw (RuntimeException. "boom")))]
+      (let [reporter (system/start-reporter! stores 200)]
+        (Thread/sleep 900)
+        (system/stop-reporter! reporter))))
+
+  )
+
+
+
+(comment
+  (require
+   '[bumblebee.mqtt.system :as system]
+   '[bumblebee.mqtt.store.in-memory-session-store :as sess]
+   '[bumblebee.mqtt.store.in-memory-subscription-store :as subs]
+   '[bumblebee.mqtt.store.in-memory-dup-pub-messages-store :as dup]
+   '[bumblebee.mqtt.store.in-memory-messages-id-store :as mid]
+   '[bumblebee.mqtt.store.in-memory-retain-store :as retain]
+   '[bumblebee.mqtt.core :as core])
+  
+  (let [stores {:session-store (sess/init)
+                :subscription-store (subs/init)
+                :dup-pub-store (dup/init)
+                :message-id-store (mid/init)
+                :retain-store (retain/init)
+                :node-name "node-1"}
+        counter (atom 0)]
+    (with-redefs [system/publish-metrics! (fn [_]
+                                            (swap! counter inc)
+                                            (println (str "publishing..." @counter))
+                                            (throw (RuntimeException. "boom")))]
+      (let [reporter (system/start-reporter! stores 1000)]
+        (Thread/sleep 3500)
+        (system/stop-reporter! reporter)
+        (println "final count" @counter))))
+
+  )

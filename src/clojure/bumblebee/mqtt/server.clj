@@ -9,7 +9,8 @@
    [bumblebee.mqtt.store.in-memory-subscription-store :as subs]
    [bumblebee.mqtt.store.in-memory-dup-pub-messages-store :as dup]
    [bumblebee.mqtt.store.in-memory-messages-id-store :as mid]
-   [bumblebee.mqtt.store.in-memory-retain-store :as retain])
+   [bumblebee.mqtt.store.in-memory-retain-store :as retain]
+   [bumblebee.mqtt.system :as system])
   (:import
    [io.netty.bootstrap ServerBootstrap Bootstrap]
    [io.netty.channel Channel ChannelOption EventLoopGroup ChannelInitializer ChannelHandler SimpleChannelInboundHandler ChannelPipeline]
@@ -70,6 +71,9 @@
                  :message-id-store (mid/init)
                  :retain-store (retain/init)
                  :node-name (-> config :mqtt-config :node-name)}
+         metrics-interval (get-in config [:mqtt-config :system-stats-interval-ms] 5000)
+         reporter (when (and metrics-interval (pos? (long metrics-interval)))
+                    (system/start-reporter! stores metrics-interval))
          _ (when (seq (get-in config [:mqtt-config :filters]))
              ;; If filters are declared in config, reset and register them to
              ;; avoid duplicate entries across hot restarts in dev.
@@ -93,14 +97,21 @@
       :tcp-channel tcp-ch
       :tcp-ssl-channel tcp-ssl-ch
       :web-socket-channel ws-ch
-      :web-socket-ssl-channel ws-ssl-ch})))
+      :web-socket-ssl-channel ws-ssl-ch
+      :system-reporter reporter})))
 
 (defn stop
   "Stop all channels and shutdown event loop groups."
   [{:keys [^EventLoopGroup boss ^EventLoopGroup worker
            ^Channel tcp-channel ^Channel tcp-ssl-channel
-           ^Channel web-socket-channel ^Channel web-socket-ssl-channel]}]
+           ^Channel web-socket-channel ^Channel web-socket-ssl-channel
+           system-reporter]}]
   (let [chs (remove nil? [tcp-channel tcp-ssl-channel web-socket-channel web-socket-ssl-channel])]
+    (when system-reporter
+      (try
+        (system/stop-reporter! system-reporter)
+        (catch Throwable ex
+          (println "[MQTT] failed to stop system reporter" (.getMessage ex)))))
     ;; First, actively close channels so their closeFuture completes.
     (doseq [^Channel ch chs]
       (.close ch))
@@ -113,6 +124,7 @@
     :stopped))
 
 (comment
+  (require '[bumblebee.mqtt.config :as mqtt-cfg])
   ;; Minimal manual run (binds TCP 1883 by default config)
   (def state (start))
   ;; ... connect with an MQTT client ...
@@ -188,4 +200,18 @@
     (.close ch)
     (-> (.shutdownGracefully group) (.syncUninterruptibly))
     (stop state))
+
+  (def config mqtt-cfg/get-config)
+
+  (def stores {:session-store (sess/init)
+               :subscription-store (subs/init)
+               :dup-pub-store (dup/init)
+               :message-id-store (mid/init)
+               :retain-store (retain/init)
+               :node-name (-> config :mqtt-config :node-name)})
+  
+
+  (system/start-reporter! stores 5000)
+
+
   )

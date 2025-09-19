@@ -5,7 +5,7 @@
    [bumblebee.mqtt.config :as cfg]
    [bumblebee.mqtt.core :as core]))
 
-(defonce instance 
+(defonce instance
   (atom nil))
 
 (defn- make-memory-instance [config]

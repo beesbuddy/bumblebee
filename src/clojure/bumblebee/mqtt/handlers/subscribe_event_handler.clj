@@ -2,7 +2,8 @@
   (:require
    [bumblebee.mqtt.core :as core]
    [bumblebee.mqtt.util :as util]
-   [bumblebee.mqtt.store.subscription :as s])
+   [bumblebee.mqtt.store.subscription :as s]
+   [bumblebee.mqtt.system :as system])
   (:import
    [io.netty.channel ChannelHandlerContext]
    [io.netty.handler.codec.mqtt
@@ -37,15 +38,23 @@
       (let [qos-results (transient [])]
         (doseq [^MqttTopicSubscription t topic-subs]
           (let [topic (.topicFilter t)
-                qos (.qualityOfService t)
-                sub (s/make-subscription client-id topic qos)
+                requested-qos (.qualityOfService t)
+                system-topic-match? (system/topic-filter-matches-system-topic? topic)
+                granted-qos (if system-topic-match?
+                              MqttQoS/AT_MOST_ONCE
+                              requested-qos)
+                sub (s/make-subscription client-id topic granted-qos)
                 added (core/add-subscription sub-store sub)
-                granted (if added (.value qos) (.value MqttQoS/FAILURE))]
-            (conj! qos-results (int granted))
+                granted (if added (.value granted-qos) (.value MqttQoS/FAILURE))]
+            (let [_  (conj! qos-results (int granted))])
             ;; On success, fire any retained messages
             (when added
-              (send-retained-if-any! retain-store ctx sub))))
+              (if system-topic-match?
+                (do
+                  (system/publish-metrics! (:mqtt-store request))
+                  (send-retained-if-any! retain-store ctx sub))
+                (send-retained-if-any! retain-store ctx sub))))
         (let [granted-list (persistent! qos-results)
               suback (util/sub-ack-message (.. msg variableHeader messageId) granted-list)]
-          (.writeAndFlush ctx suback)))
+          (.writeAndFlush ctx suback))))
       (.close ch))))

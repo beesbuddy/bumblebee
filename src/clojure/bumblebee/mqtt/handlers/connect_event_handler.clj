@@ -42,8 +42,7 @@
 
 (comment
   (require '[bumblebee.mqtt.config :refer [get-config]]
-           '[bumblebee.mqtt.store :refer [get-instance]]
-           '[bumblebee.mqtt.core :as core])
+           '[bumblebee.mqtt.store :refer [get-instance]])
 
   (def cfg (get-config))
   (print (-> cfg :mqtt-config :storage-provider))

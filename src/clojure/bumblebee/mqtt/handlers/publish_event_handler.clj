@@ -2,7 +2,8 @@
   (:require
    [clojure.string :as str]
    [bumblebee.mqtt.core :as core]
-   [bumblebee.mqtt.util :as util])
+   [bumblebee.mqtt.util :as util]
+   [bumblebee.mqtt.system :as system])
   (:import
    [io.netty.channel ChannelHandlerContext]
    [io.netty.handler.codec.mqtt
@@ -81,8 +82,9 @@
         pub-msg (util/mqtt-msg->comm-pub-msg msg false node-name)
         packet-id (.. msg variableHeader packetId)
         inbound-qos (int (:mqtt-qos pub-msg))]
-    (publish-to-subscribers! subscription-store session-store dup-store message-id-store pub-msg)
-    (handle-retain! retain-store pub-msg)
+    (when-not (system/system-topic? (:topic pub-msg))
+      (publish-to-subscribers! subscription-store session-store dup-store message-id-store pub-msg)
+      (handle-retain! retain-store pub-msg))
     (case inbound-qos
       1 (.writeAndFlush ctx (util/pub-ack-message packet-id))
       2 (.writeAndFlush ctx (util/pub-rec-message packet-id))

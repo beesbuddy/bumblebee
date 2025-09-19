@@ -30,6 +30,7 @@
                                  :web-socket-ssl-port -1
                                  :hostname "localhost"
                                  :storage-provider const/default-storage-type
+                                 :system-stats-interval-ms 5000
                                  ;; Optional: list of filters to auto-register at startup
                                  ;; [{:name :deny-all
                                  ;;   :priority 0
