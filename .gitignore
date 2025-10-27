@@ -16,7 +16,8 @@
 
 # Clojure tooling caches
 /.cpcache/
-/.clj-kondo/
+/.clj-kondo/imports/
+/.clj-kondo/.cache/
 /.lsp/
 /.portal/
 /.joyride/

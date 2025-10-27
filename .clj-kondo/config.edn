@@ -1,0 +1,14 @@
+{:linters      {:redundant-do {:level :off}}
+ :config-paths ["com.pitch/uix.core" "com.pitch/uix.dom" "metosin/malli"]
+ :lint-as
+ {bumblebee.mqtt.filters/deffilter clojure.core/def
+  bumblebee.macros/defregistry clojure.core/def
+  bumblebee.shared.registry/defregistry clojure.core/def}
+ :hooks
+ {:analyze-call
+  {bumblebee.shared.registry/defregistry
+   bumblebee.shared.registry/defregistry-analyzer}}
+ :hooks-config
+ {bumblebee.shared.registry/defregistry
+  {:analyzer
+   {:args [{:name "sym"} {:name "opts"}]}}}}
