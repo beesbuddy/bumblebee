@@ -1,0 +1,58 @@
+# Clojure / Leiningen
+/target/
+/classes/
+/checkouts/
+/lib/
+/tmp/
+/log/
+/logs/
+/.lein-*
+/.lein-failures
+/.lein-repl-history
+/.lein-env
+/.nrepl-port
+/.repl-history
+/rebel_readline_history
+
+# Clojure tooling caches
+/.cpcache/
+/.clj-kondo/
+/.lsp/
+/.portal/
+/.joyride/
+/.calva/
+
+# Shadow-cljs build outputs
+/.shadow-cljs/
+/resources/public/js/
+/resources/public/dist/
+
+# Node / npm
+/node_modules/
+/.npm/
+/.pnpm-store/
+/.yarn/
+/yarn-error.log
+/npm-debug.log
+
+# Build tooling & IDEs
+/.idea/
+*.iml
+/.vscode/
+/.classpath
+/.project
+/.settings/
+/out/
+/public/js/
+/public/dist/
+/public/css/
+
+# Certificates and local data
+/cert.pem
+/key.pem
+/key_pkcs8.pem
+/test.db
+
+# OS artifacts
+.DS_Store
+Thumbs.db

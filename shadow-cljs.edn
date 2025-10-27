@@ -1,0 +1,19 @@
+{:lein         true
+ :dependencies []
+ :builds
+ {:app
+  {:target           :browser
+   :output-dir       "resources/public/js"
+   :asset-path       "/js"
+   :modules          {:main {:entries [bumblebee.ui.core]
+                             :init-fn bumblebee.ui.core/init}}
+   :devtools         {:http-port 8020
+                      :http-root "resources/public"
+                      :fs-watch {:force-polling true}
+                      :after-load bumblebee.ui.core/init
+                      :preloads [uix.preload]}
+   :compiler-options {:infer-externs false :warnings {:infer false}}}
+  :test
+  {:target    :node-test
+   :output-to "target/test.js"
+   :autorun   true}}}
