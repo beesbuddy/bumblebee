@@ -24,7 +24,7 @@
       [])
     (let [name (get-in route [:data :name])]
       ($ :header {:className "border-b"}
-         ($ :.container {:className "py-3 flex gap-6 items-center"}
+         ($ :.container {:className "py-3 px-3 flex gap-6 items-center"}
             ($ :nav {:className "flex gap-4"}
                ($ :a {:href (router/href :home)
                       :onMouseEnter chunks/preload-home

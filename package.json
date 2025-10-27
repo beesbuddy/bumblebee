@@ -1,7 +1,7 @@
 {
-  "name": "uix-starter-lein-jwt-refresh",
+  "name": "bumblebee-ui",
   "private": true,
-  "version": "0.8.0",
+  "version": "0.0.1",
   "scripts": {
     "dev": "concurrently \"npm:dev:css\" \"shadow-cljs watch app\"",
     "build": "npm run build:css && shadow-cljs release app",
@@ -11,14 +11,13 @@
     "sass:build": "sass --load-path=node_modules src/styles/main.scss resources/public/css/main.pre.css --no-source-map",
     "tw:watch": "wait-on resources/public/css/main.pre.css && postcss resources/public/css/main.pre.css -o resources/public/css/main.css --watch",
     "tw:build": "postcss resources/public/css/main.pre.css -o resources/public/css/main.css",
-    "scss": "npm run sass:watch",
     "test:watch": "shadow-cljs watch test",
     "test:ci": "shadow-cljs run :test"
   },
   "dependencies": {
     "axios": "^1.7.2",
     "events": "^3.3.0",
-    "mqtt": "^4.3.7",
+    "mqtt": "^5.14.1",
     "url": "^0.11.4"
   },
   "devDependencies": {

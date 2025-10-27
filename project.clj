@@ -2,7 +2,7 @@
   :description "Simple MQTT and dashboard based project for small IoT with simplicity in mind"
 
   ;; :global-vars {*warn-on-reflection* true}
-  
+
   :managed-dependencies
   [[io.netty/netty-codec-http "4.1.121.Final"]
    [io.netty/netty-codec "4.1.121.Final"]

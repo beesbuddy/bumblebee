@@ -9,6 +9,7 @@
     (print deps)
     true))
 
+#_{:clj-kondo/ignore [:unresolved-var]}
 (a/auth-reg-register!
  (a/auth-reg-default-key)
  (fn [{:keys [credentials deps]}] (->PasswordAuth credentials deps)))
