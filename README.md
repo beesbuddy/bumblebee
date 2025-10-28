@@ -7,12 +7,17 @@
 lein start-dev
 ```
 
-In repl run
+In repl run to start server:
 
 ```clojure
 (mqqt-start!)
 ```
 
+In repl run to stop server:
+
+```clojure
+(mqtt-stop!)
+```
 
 ## MQTT Filters (Public API)
 
