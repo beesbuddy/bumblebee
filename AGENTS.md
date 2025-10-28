@@ -16,8 +16,8 @@
 - Run `clj-kondo --lint src/clojure dev test` before pushing to respect the custom hooks in `.clj-kondo/`.
 
 ## Testing Guidelines
-- Place backend specs under `test/bumblebee/..._test.clj` using `clojure.test`; mirror namespace structure and gate optional suites with `^:skip-ci` only when unavoidable.
-- Add CLJS tests alongside front-end modules in `test/bumblebee/..._test.cljs`; the node runner declared in `shadow-cljs.edn` handles module resolution.
+- Place backend specs under `test/bumblebee/clojure/..._test.clj` using `clojure.test`; mirror namespace structure and gate optional suites with `^:skip-ci` only when unavoidable.
+- Add CLJS tests alongside front-end modules in `test/bumblebee/clojure/..._test.cljs`; the node runner declared in `shadow-cljs.edn` handles module resolution.
 - Prioritize coverage for MQTT parsing, registry updates, and UI reducers; note gaps or flaky areas in the PR body.
 
 ## Commit & Pull Request Guidelines
