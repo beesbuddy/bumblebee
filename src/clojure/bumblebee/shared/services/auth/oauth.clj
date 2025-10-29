@@ -3,7 +3,7 @@
 (defrecord OAuth [client-id deps]
   a/Auth
   (authenticate [_ _] 
-    ;; ... your logic ...
+    ;; TODO: Implement OAuth authentication flow here
     true))
 
 (a/auth-reg-register!

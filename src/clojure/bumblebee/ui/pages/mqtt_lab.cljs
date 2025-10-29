@@ -2,15 +2,18 @@
   (:require
    ["mqtt" :refer [connect]]
    [clojure.string :as str]
+   [bumblebee.mqtt.client-id :as mqtt-client-id]
    [uix.core :refer [$ defui use-effect use-ref use-state]]))
+
+(def ^:private default-ws-port 8883)
+(def ^:private default-tcp-port 1883)
+(def ^:private default-ws-path "/mqtt")
+(def ^:private default-host "localhost")
+(def ^:private default-topic "test")
 
 (defn mqtt-connect
   ([url opts]
    (connect url opts)))
-
-(def default-ws-port 8883)
-(def default-tcp-port 1883)
-(def default-ws-path "/mqtt")
 
 (defn browser-host []
   (when (exists? js/window)
@@ -21,19 +24,16 @@
   (when (exists? js/window)
     (= "https:" (.. js/window -location -protocol))))
 
-;; (defn random-client-id [prefix]
-;;   (str prefix "-" (random-uuid)))
-
 (defn initial-client-config [prefix]
-  {:host (or (browser-host) "localhost")
+  {:host (or (browser-host) default-host)
    :ws-port default-ws-port
    :tcp-port default-tcp-port
    :ws-path default-ws-path
-   :client-id "test"
+   :client-id (mqtt-client-id/random-client-id prefix)
    :username ""
    :password ""
    :keepalive 60
-   :topic "test"
+   :topic default-topic
    :reconnect-ms 2000})
 
 (defn ->mqtt-options [{:keys [client-id username password keepalive reconnect-ms]}]
@@ -537,10 +537,7 @@
                                              :subscriber sub-state)
                                      state-setter (case target
                                                     :publisher set-pub-state
-                                                    :subscriber set-sub-state)
-                                     fallback-ref (case target
-                                                    :publisher pub-fallback?
-                                                    :subscriber sub-fallback?)]
+                                                    :subscriber set-sub-state)]
                                  (state-setter {:status :closing
                                                 :transport (:transport state)
                                                 :url (:url state)
@@ -664,6 +661,7 @@
                                 (connect-ws))))
           clear-sub-error! #(set-sub-state (fn [s] (assoc s :error nil)))
           clear-publish-status! #(set-publish-status (fn [s] (assoc s :error nil :ok? false)))]
+
       ($ :div {:className "space-y-6"}
          (heading)
          ($ :div {:className "grid gap-6 lg:grid-cols-2"}
