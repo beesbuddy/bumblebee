@@ -6,6 +6,7 @@
     ;; TODO: Implement OAuth authentication flow here
     true))
 
+#_{:clj-kondo/ignore [:unresolved-var]}
 (a/auth-reg-register!
  (a/auth-reg-default-key)
  (fn [{:keys [client-id deps]}] (->OAuth client-id deps)))

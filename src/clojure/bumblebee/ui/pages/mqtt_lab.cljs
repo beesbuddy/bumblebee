@@ -36,11 +36,12 @@
    :topic default-topic
    :reconnect-ms 2000})
 
-(defn ->mqtt-options [{:keys [client-id username password keepalive reconnect-ms]}]
+(defn ->mqtt-options [{:keys [client-id username password keepalive]}]
   (let [opts (js-obj)]
     (aset opts "clean" true)
     (aset opts "protocolVersion" 4)
-    (aset opts "reconnectPeriod" (or reconnect-ms 2000))
+    ;; disable automatic reconnects; handled manually with backoff
+    (aset opts "reconnectPeriod" 0)
     (aset opts "keepalive" (or keepalive 60))
     (when (seq client-id) (aset opts "clientId" client-id))
     (when (seq username) (aset opts "username" username))
@@ -78,15 +79,6 @@
         client (mqtt-connect url opts)]
     {:client client
      :transport :websocket
-     :url url}))
-
-(defn connect-tcp! [{:keys [host tcp-port] :as cfg}]
-  (let [url (str "mqtt://" (or host "localhost")
-                 (when tcp-port (str ":" tcp-port)))
-        opts (->mqtt-options cfg)
-        client (mqtt-connect url opts)]
-    {:client client
-     :transport :mqtt
      :url url}))
 
 (defn stop-client! [client]
@@ -164,8 +156,7 @@
      ($ :div {:className "space-y-2"}
         ($ :h1 {:className "text-3xl font-bold"} "MQTT Test Lab")
         ($ :p {:className "text-slate-600"}
-           "Create publisher and subscriber clients, then publish test messages. "
-           "The UI prefers WebSocket connections and falls back to TCP MQTT if WebSocket fails."))))
+           "Create publisher and subscriber clients, then publish test messages."))))
 
 (defn checkbox-input [{:keys [label checked? on-change hint disabled?]}]
   (let [class-name (cond-> "flex items-center gap-2 text-sm"
@@ -193,15 +184,14 @@
      ($ :div {:className "flex items-center justify-between"}
         ($ :h2 {:className "text-xl font-semibold"} title)
         ($ :span {:className "text-xs text-slate-500"} (format-status state)))
-     (when-let [err (:error state)]
-       ($ :div {:className "text-sm text-red-600"} err))
      body
      (when footer footer)))
 
 (defui client-connection-form
   [{:keys [config set-config state label on-connect on-disconnect]}]
   (let [connected? (= :connected (:status state))
-        connecting? (= :connecting (:status state))]
+        connecting? (or (= :connecting (:status state))
+                        (:retrying? state))]
     ($ :div {:className "space-y-4"}
        ($ :div {:className "grid gap-3 sm:grid-cols-2"}
           (client-form-input {:label "Host"
@@ -270,7 +260,7 @@
                                      :on-connect on-connect
                                      :on-disconnect on-disconnect})))
        ($ :p {:className "text-xs text-slate-500"}
-          "WebSocket is attempted first; MQTT/TCP is used automatically if WebSocket fails."))))
+          "Connections use WebSocket transport; MQTT/TCP fallback is not supported."))))
 
 (defui subscriber-subscription-form
   [{:keys [form set-form on-subscribe connected? clear-error!]}]
@@ -437,6 +427,8 @@
                                                   :connected? connected?
                                                   :clear-error! clear-error!})
                  ($ subscriber-subscriptions-panel {:subscriptions subscriptions})
+                 (when-let [err (:error state)]
+                   ($ :div {:className "text-sm text-red-600"} err))
                  ($ subscriber-messages-panel {:messages messages}))})))
 
 (defui publisher-section
@@ -464,16 +456,29 @@
         sub-client (use-ref nil)
         [pub-config set-pub-config] (use-state (initial-client-config "pub"))
         [sub-config set-sub-config] (use-state (initial-client-config "sub"))
-        [pub-state set-pub-state] (use-state {:status :disconnected :transport :websocket :url nil :error nil})
-        [sub-state set-sub-state] (use-state {:status :disconnected :transport :websocket :url nil :error nil})
+        [pub-state set-pub-state] (use-state {:status :disconnected :transport :websocket :url nil :error nil :retrying? false})
+        [sub-state set-sub-state] (use-state {:status :disconnected :transport :websocket :url nil :error nil :retrying? false})
         [sub-form set-sub-form] (use-state {:topic "" :qos 0})
         [pub-form set-pub-form] (use-state {:topic "" :message "" :qos 0 :retain false})
         [messages set-messages] (use-state [])
         [subscriptions set-subscriptions] (use-state #{})
         [publish-status set-publish-status] (use-state {:pending? false :error nil :ok? false})
         [connection-log set-connection-log] (use-state [])
-        pub-fallback? (use-ref false)
-        sub-fallback? (use-ref false)]
+        pub-retry-state (use-ref {:attempt 0 :timer nil :closing? false})
+        sub-retry-state (use-ref {:attempt 0 :timer nil :closing? false})
+        retry-ref-for (fn [target]
+                        (case target
+                          :publisher pub-retry-state
+                          :subscriber sub-retry-state))
+        clear-retry-state!
+        (letfn [(clear-retry-state!*
+                  ([target] (clear-retry-state!* target {:closing? false}))
+                  ([target {:keys [closing?] :or {closing? false}}]
+                   (let [ref (retry-ref-for target)]
+                     (when-let [timer (:timer @ref)]
+                       (js/clearTimeout timer))
+                     (reset! ref {:attempt 0 :timer nil :closing? closing?}))))]
+          clear-retry-state!*)]
 
     (use-effect
      (fn []
@@ -484,6 +489,12 @@
          (when-let [client @sub-client]
            (stop-client! client)
            (reset! sub-client nil))
+         (when-let [timer (:timer @pub-retry-state)]
+           (js/clearTimeout timer))
+         (reset! pub-retry-state {:attempt 0 :timer nil :closing? false})
+         (when-let [timer (:timer @sub-retry-state)]
+           (js/clearTimeout timer))
+         (reset! sub-retry-state {:attempt 0 :timer nil :closing? false})
          (set-messages [])
          (set-subscriptions #{})))
      [])
@@ -496,38 +507,33 @@
                                 vec))))
           handle-connect! (fn [target {:keys [transport url]}]
                             (case target
-                              :publisher (set-pub-state {:status :connected :transport transport :url url :error nil})
-                              :subscriber (set-sub-state {:status :connected :transport transport :url url :error nil}))
+                              :publisher (set-pub-state {:status :connected :transport transport :url url :error nil :retrying? false})
+                              :subscriber (set-sub-state {:status :connected :transport transport :url url :error nil :retrying? false}))
                             (update-log! {:event "connected" :target (name target) :transport (some-> transport name) :url url})
-                            (case target
-                              :publisher (reset! pub-fallback? false)
-                              :subscriber (reset! sub-fallback? false)))
+                            (clear-retry-state! target))
           handle-close! (fn [target]
                           (case target
-                            :publisher (set-pub-state (fn [s] (assoc s :status :disconnected :error nil)))
-                            :subscriber (set-sub-state (fn [s] (assoc s :status :disconnected :error nil))))
-                          (update-log! {:event "closed" :target (name target)})
-                          (case target
-                            :publisher (reset! pub-fallback? false)
-                            :subscriber (reset! sub-fallback? false)))
-          handle-error! (fn [target transport err fallback-fn fallback-ref]
+                            :publisher (set-pub-state (fn [s] (assoc s :status :disconnected :error nil :retrying? false)))
+                            :subscriber (set-sub-state (fn [s] (assoc s :status :disconnected :error nil :retrying? false))))
+                          (update-log! {:event "closed" :target (name target)}))
+          handle-error! (fn [target transport err]
                           (let [msg (or (some-> err (.-message)) (str err))
                                 client (case target
                                          :publisher @pub-client
-                                         :subscriber @sub-client)
-                                connected? (when client (.-connected client))]
+                                         :subscriber @sub-client)]
+                            (when client
+                              (stop-client! client)
+                              (case target
+                                :publisher (reset! pub-client nil)
+                                :subscriber (reset! sub-client nil)))
                             (update-log! {:event "error"
                                           :target (name target)
                                           :transport (some-> transport name)
                                           :message msg})
                             (case target
-                              :publisher (set-pub-state (fn [s] (assoc s :status :error :transport transport :error msg)))
-                              :subscriber (set-sub-state (fn [s] (assoc s :status :error :transport transport :error msg))))
-                            (when (and (= transport :websocket)
-                                       (not connected?)
-                                       (not @fallback-ref))
-                              (reset! fallback-ref true)
-                              (fallback-fn))))
+                              :publisher (set-pub-state (fn [s] (assoc s :status :error :transport transport :error msg :retrying? false)))
+                              :subscriber (set-sub-state (fn [s] (assoc s :status :error :transport transport :error msg :retrying? false))))
+                            msg))
           disconnect-client! (fn [target]
                                (let [client-ref (case target
                                                   :publisher pub-client
@@ -541,43 +547,47 @@
                                  (state-setter {:status :closing
                                                 :transport (:transport state)
                                                 :url (:url state)
-                                                :error nil})
+                                                :error nil
+                                                :retrying? false})
+                                 (clear-retry-state! target {:closing? true})
                                  (when-let [client @client-ref]
                                    (stop-client! client)
                                    (reset! client-ref nil))
-                                 (state-setter {:status :disconnected :transport :websocket :url nil :error nil})
-                                 (case target
-                                   :publisher (reset! pub-fallback? false)
-                                   :subscriber (do
-                                                 (reset! sub-fallback? false)
-                                                 (set-subscriptions #{}))))
+                                 (state-setter {:status :disconnected :transport :websocket :url nil :error nil :retrying? false})
+                                 (when (= target :subscriber)
+                                   (set-subscriptions #{})))
                                (update-log! {:event "disconnect" :target (name target)}))
-          subscribe-topic! (fn [form]
-                             (let [form (or form {})
-                                   topic (if (contains? form :topic) (:topic form) (:topic sub-form))
-                                   qos (if (contains? form :qos) (:qos form) (:qos sub-form))
-                                   client @sub-client]
-                               (set-sub-state (fn [s] (assoc s :error nil)))
-                               (cond
-                                 (str/blank? topic)
-                                 (set-sub-state (fn [s] (assoc s :error "Topic required")))
-                                 (nil? client)
-                                 (set-sub-state (fn [s] (assoc s :error "Subscriber client is not connected")))
-                                 :else
-                                 (subscribe-client! client topic qos
-                                                    (fn [err]
-                                                      (if err
-                                                        (let [msg (cond
-                                                                    (instance? js/Error err) (.-message err)
-                                                                    (string? err) err
-                                                                    :else (str err))]
-                                                          (set-sub-state (fn [s] (assoc s :error msg))))
-                                                        (do
-                                                          (set-subscriptions #(conj % topic))
-                                                          (set-sub-state (fn [s] (assoc s :error nil)))
-                                                          (update-log! {:event "subscribed"
-                                                                        :target "subscriber"
-                                                                        :message (str "topic=" topic " qos=" qos)}))))))))
+          subscribe-topic!
+          (letfn [(do-subscribe [form {:keys [suppress-blank?] :or {suppress-blank? false}}]
+                    (let [form (or form {})
+                          topic (if (contains? form :topic) (:topic form) (:topic sub-form))
+                          qos (if (contains? form :qos) (:qos form) (:qos sub-form))
+                          client @sub-client]
+                      (set-sub-state (fn [s] (assoc s :error nil)))
+                      (cond
+                        (str/blank? topic)
+                        (when-not suppress-blank?
+                          (set-sub-state (fn [s] (assoc s :error "Topic required"))))
+                        (nil? client)
+                        (set-sub-state (fn [s] (assoc s :error "Subscriber client is not connected")))
+                        :else
+                        (subscribe-client! client topic qos
+                                           (fn [err]
+                                             (if err
+                                               (let [msg (cond
+                                                           (instance? js/Error err) (.-message err)
+                                                           (string? err) err
+                                                           :else (str err))]
+                                                 (set-sub-state (fn [s] (assoc s :error msg))))
+                                               (do
+                                                 (set-subscriptions #(conj % topic))
+                                                 (set-sub-state (fn [s] (assoc s :error nil)))
+                                                 (update-log! {:event "subscribed"
+                                                               :target "subscriber"
+                                                               :message (str "topic=" topic " qos=" qos)}))))))))]
+            (fn
+              ([form] (do-subscribe form {}))
+              ([form opts] (do-subscribe form opts))))
           publish-topic! (fn [form]
                            (let [form (or form {})
                                  topic (if (contains? form :topic) (:topic form) (:topic pub-form))
@@ -618,47 +628,102 @@
                                   state-setter (case target
                                                  :publisher set-pub-state
                                                  :subscriber set-sub-state)
-                                  fallback-ref (case target
-                                                 :publisher pub-fallback?
-                                                 :subscriber sub-fallback?)]
-                              (reset! fallback-ref false)
-                              (let [message-handler (fn [_ topic payload packet]
-                                                      (set-messages
-                                                       (fn [entries]
-                                                         (->> (conj entries {:topic topic
-                                                                             :payload payload
-                                                                             :qos (some-> packet .-qos)
-                                                                             :timestamp (.toISOString (js/Date.))})
-                                                              (take-last max-log-entries)
-                                                              vec))))
-                                    attach-and-record (fn [client url transport err-fn]
-                                                        (let [client-with-handlers (attach-handlers! client
-                                                                                                     {:on-connect (fn [_ _]
-                                                                                                                    (handle-connect! target {:transport transport :url url}))
-                                                                                                      :on-close (fn [] (handle-close! target))
-                                                                                                      :on-error err-fn
-                                                                                                      :on-message (when (= target :subscriber)
-                                                                                                                    message-handler)})]
-                                                          (when-let [old @client-ref]
-                                                            (stop-client! old))
-                                                          (reset! client-ref client-with-handlers)
-                                                          (update-log! {:event "connecting"
-                                                                        :target (name target)
-                                                                        :transport (some-> transport name)
-                                                                        :url url})))
-                                    connect-tcp (fn []
-                                                  (state-setter {:status :connecting :transport :mqtt :url nil :error nil})
-                                                  (let [{:keys [client url transport]} (connect-tcp! cfg)]
-                                                    (attach-and-record client url transport
-                                                                       (fn [_ err]
-                                                                         (handle-error! target transport err (fn [] nil) fallback-ref)))))
-                                    connect-ws (fn []
-                                                 (state-setter {:status :connecting :transport :websocket :url nil :error nil})
-                                                 (let [{:keys [client url transport]} (connect-websocket! cfg)]
-                                                   (attach-and-record client url transport
-                                                                      (fn [_ err]
-                                                                        (handle-error! target transport err connect-tcp fallback-ref)))))]
-                                (connect-ws))))
+                                  retry-ref (retry-ref-for target)
+                                  max-attempts 3]
+                              (letfn [(retry-delay-ms [next-attempt]
+                                        (let [base-delays [1000 2000 5000]
+                                              base-count (count base-delays)]
+                                          (cond
+                                            (< next-attempt 2) 0
+                                            (<= next-attempt (inc base-count))
+                                            (nth base-delays (- next-attempt 2))
+                                            :else (let [overflow (- next-attempt (inc base-count))
+                                                        last-delay (last base-delays)]
+                                                    (* last-delay
+                                                       (js/Math.pow 2 overflow))))))
+                                      (clear-timer! []
+                                        (when-let [id (:timer @retry-ref)]
+                                          (js/clearTimeout id))
+                                        (swap! retry-ref assoc :timer nil))
+                                      (message-handler [_ topic payload packet]
+                                        (set-messages
+                                         (fn [entries]
+                                           (->> (conj entries {:topic topic
+                                                               :payload payload
+                                                               :qos (some-> packet .-qos)
+                                                               :timestamp (.toISOString (js/Date.))})
+                                                (take-last max-log-entries)
+                                                vec))))
+                                      (attach-and-record [client url transport attempt]
+                                        (let [client-with-handlers (attach-handlers! client
+                                                                                     {:on-connect (fn [_ _]
+                                                                                                    (handle-connect! target {:transport transport :url url}))
+                                                                                      :on-close (fn []
+                                                                                                  (handle-close! target)
+                                                                                                  (let [data @retry-ref
+                                                                                                        closing? (:closing? data)
+                                                                                                        attempt' (max 1 (:attempt data))
+                                                                                                        timer (:timer data)]
+                                                                                                    (when (and (not closing?)
+                                                                                                               (< attempt' max-attempts)
+                                                                                                               (nil? timer))
+                                                                                                      (schedule-retry! "Connection closed" attempt'))))
+                                                                                      :on-error (fn [_ err]
+                                                                                                  (let [data @retry-ref
+                                                                                                        closing? (:closing? data)
+                                                                                                        msg (handle-error! target transport err)]
+                                                                                                    (when (not closing?)
+                                                                                                      (schedule-retry! msg attempt))))
+                                                                                      :on-message (when (= target :subscriber)
+                                                                                                    message-handler)})]
+                                          (when-let [old @client-ref]
+                                            (stop-client! old))
+                                          (reset! client-ref client-with-handlers)
+                                          (update-log! {:event "connecting"
+                                                        :target (name target)
+                                                        :transport (some-> transport name)
+                                                        :url url})))
+                                      (schedule-retry! [last-error attempt]
+                                        (if (>= attempt max-attempts)
+                                          (let [base-msg (if (seq last-error)
+                                                           (str "Failed to connect after " attempt " attempts. Last error: " last-error)
+                                                           (str "Failed to connect after " attempt " attempts."))
+                                                final-msg (str base-msg " No further retries will be attempted.")]
+                                            (clear-timer!)
+                                            (swap! retry-ref assoc :attempt attempt)
+                                            (state-setter (fn [s] (assoc s :status :error :error final-msg :retrying? false)))
+                                            (update-log! {:event "retry-exhausted"
+                                                          :target (name target)
+                                                          :message (str "attempts=" attempt " exhausted")}))
+                                          (let [next-attempt (inc attempt)
+                                                delay-ms (js/Math.round (retry-delay-ms next-attempt))
+                                                existing (:timer @retry-ref)
+                                                message (if (seq last-error)
+                                                          (str last-error " — retrying in " delay-ms "ms (attempt "
+                                                               next-attempt " of " max-attempts ").")
+                                                          (str "Retrying in " delay-ms "ms (attempt "
+                                                               next-attempt " of " max-attempts ")."))]
+                                            (state-setter (fn [s] (assoc s :status :error :error message :retrying? true)))
+                                            (when-not existing
+                                              (let [timer (js/setTimeout
+                                                            (fn []
+                                                              (swap! retry-ref assoc :timer nil)
+                                                              (start-attempt! next-attempt))
+                                                            delay-ms)]
+                                                (swap! retry-ref assoc :timer timer)
+                                                (update-log! {:event "retry-scheduled"
+                                                              :target (name target)
+                                                              :message (str "attempt=" next-attempt " delayMs=" delay-ms)}))))))
+                                      (connect-ws [attempt]
+                                        (state-setter {:status :connecting :transport :websocket :url nil :error nil :retrying? true})
+                                        (let [{:keys [client url transport]} (connect-websocket! cfg)]
+                                          (attach-and-record client url transport attempt)))
+                                      (start-attempt! [attempt]
+                                        (clear-timer!)
+                                        (swap! retry-ref assoc :attempt attempt :closing? false)
+                                        (connect-ws attempt))]
+                                (clear-retry-state! target)
+                                (start-attempt! 1))))
           clear-sub-error! #(set-sub-state (fn [s] (assoc s :error nil)))
           clear-publish-status! #(set-publish-status (fn [s] (assoc s :error nil :ok? false)))]
 
@@ -670,7 +735,7 @@
                                    :state sub-state
                                    :on-connect (fn []
                                                  (connect-client! :subscriber sub-config)
-                                                 (subscribe-topic! sub-form))
+                                                 (subscribe-topic! sub-form {:suppress-blank? true}))
                                    :on-disconnect (fn [] (disconnect-client! :subscriber))
                                    :form sub-form
                                    :set-form set-sub-form

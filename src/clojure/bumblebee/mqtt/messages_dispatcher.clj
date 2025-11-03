@@ -105,15 +105,14 @@
                ;; :handled nil
                :next (let [msg' (or (get-in res [:event :msg]) msg)]
                        (try
-
-                         (cond
-                           (= MqttMessageType/CONNECT mt)
+                         (condp = mt
+                           MqttMessageType/CONNECT
                            (connect-event-processor (assoc req-base :msg ^MqttConnectMessage msg'))
-                           (= MqttMessageType/PUBLISH mt)
+                           MqttMessageType/PUBLISH
                            (publish-event-processor (assoc req-base :msg ^MqttPublishMessage msg'))
-                           (= MqttMessageType/DISCONNECT mt)
+                           MqttMessageType/DISCONNECT
                            (disconnect-event-processor (assoc req-base :msg msg'))
-                           (= MqttMessageType/SUBSCRIBE mt)
+                           MqttMessageType/SUBSCRIBE
                            (subscribe-event-processor (assoc req-base :msg msg'))
                            :else
                            (do
