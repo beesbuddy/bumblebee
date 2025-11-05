@@ -2,7 +2,7 @@
   (:require
    [bumblebee.ui.auth :as auth]
    [bumblebee.ui.chunks :as chunks]
-   [bumblebee.ui.components.navbar :as navbar]
+   [bumblebee.ui.layout :as layout]
    [bumblebee.ui.router :as router]
    #_{:clj-kondo/ignore [:unused-namespace]}
    ["react" :as react]
@@ -19,16 +19,23 @@
 
 (defui app-root []
   (let [[route set-route] (uix.core/use-state @router/current)
-        [authed set-authed] (uix.core/use-state (auth/authed?))]
+        [authed set-authed] (uix.core/use-state (auth/authed?))
+        [token-remaining set-token-remaining] (uix.core/use-state (auth/token-remaining-s))]
     (uix.core/use-effect
       (fn []
         (auth/load!)
         (router/start!)
-        (let [_ (add-watch router/current ::root (fn [_ _ _ v] (set-route v)))
-              _ (add-watch auth/state ::auth (fn [_ _ _ _] (set-authed (auth/authed?))))]
+        (let [route-watch (fn [_ _ _ v] (set-route v))
+              auth-watch (fn [_ _ _ _]
+                           (set-authed (auth/authed?))
+                           (set-token-remaining (auth/token-remaining-s)))
+              iid (js/setInterval #(set-token-remaining (auth/token-remaining-s)) 1000)]
+          (add-watch router/current ::root route-watch)
+          (add-watch auth/state ::auth auth-watch)
           (fn []
             (remove-watch router/current ::root)
             (remove-watch auth/state ::auth)
+            (js/clearInterval iid)
             (router/stop!))))
       [])
     (let [name (get-in route [:data :name])
@@ -44,10 +51,12 @@
             (router/navigate! :login))
           js/undefined)
         [route unauthorized? name])
-      ($ :<>
-         ($ navbar/navbar)
-         ($ :main {:className "container py-6"}
-            ($ Page))))))
+      ($ layout/app-layout
+         {:route route
+          :authed? authed
+          :token-remaining token-remaining
+          :logout auth/logout!
+          :page Page}))))
 
 (defonce root* (atom nil))
 

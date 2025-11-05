@@ -1,6 +1,7 @@
-@use "tailwindcss/preflight";
-@use "tailwindcss/theme";
-@use "tailwindcss/utilities";
+@import "tailwindcss";
+
+@plugin "daisyui";
 
 .container { max-width: 960px; margin: 0 auto; padding: 0 1rem; }
 .badge { font-variant-numeric: tabular-nums; }
+
