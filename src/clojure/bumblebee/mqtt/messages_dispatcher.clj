@@ -5,6 +5,7 @@
     [bumblebee.mqtt.handlers.disconnect-event-handler :as disconnect]
     [bumblebee.mqtt.handlers.subscribe-event-handler :as subscribe]
     [bumblebee.mqtt.handlers.publish-event-handler :as publish]
+    [bumblebee.mqtt.handlers.unsubscribe-event-handler :as unsubscribe]
     [bumblebee.mqtt.filters :as fx]
     [bumblebee.mqtt.store.in-memory.session-store :as sess]
     [bumblebee.mqtt.store.in-memory.subscription-store :as subs]
@@ -60,7 +61,9 @@
   - :config map (unused here but reserved for future)
   - :connect-event-processor fn taking {:ctx ... :msg ...}
   - :disconnect-event-processor fn taking {:ctx ... :msg ...}
-  - :subscribe-event-processor fn taking {:ctx ... :msg ...}"
+  - :subscribe-event-processor fn taking {:ctx ... :msg ...}
+  - :publish-event-processor fn taking {:ctx ... :msg ...}
+  - :unsubscribe-event-processor fn taking {:ctx ... :msg ...}"
   ([] (new-messages-dispatcher {:config                     (cfg/get-config)
                                 :stores                     {:session-store      (sess/init)
                                                              :subscription-store (subs/init)
@@ -70,8 +73,9 @@
                                 :connect-event-processor    connect/connect-event-handler
                                 :disconnect-event-processor disconnect/disconnect-event-handler
                                 :subscribe-event-processor  subscribe/subscribe-event-handler
-                                :publish-event-processor    publish/publish-event-handler}))
-  ([{:keys [config stores connect-event-processor disconnect-event-processor subscribe-event-processor publish-event-processor]
+                                :publish-event-processor    publish/publish-event-handler
+                                :unsubscribe-event-processor unsubscribe/unsubscribe-event-handler}))
+  ([{:keys [config stores connect-event-processor disconnect-event-processor subscribe-event-processor publish-event-processor unsubscribe-event-processor]
      :or   {config                     (cfg/get-config)
             stores                     {:session-store      (sess/init)
                                         :subscription-store (subs/init)
@@ -81,7 +85,8 @@
             connect-event-processor    connect/connect-event-handler
             disconnect-event-processor disconnect/disconnect-event-handler
             subscribe-event-processor  subscribe/subscribe-event-handler
-            publish-event-processor    publish/publish-event-handler}}]
+            publish-event-processor    publish/publish-event-handler
+            unsubscribe-event-processor unsubscribe/unsubscribe-event-handler}}]
    (let [store-bundle (if (:node-name stores)
                         stores
                         (assoc stores :node-name (-> config :mqtt-config :node-name)))]
@@ -114,6 +119,8 @@
                            (disconnect-event-processor (assoc req-base :msg msg'))
                            MqttMessageType/SUBSCRIBE
                            (subscribe-event-processor (assoc req-base :msg msg'))
+                           MqttMessageType/UNSUBSCRIBE
+                           (unsubscribe-event-processor (assoc req-base :msg msg'))
                            :else
                            (do
                              ;; Forward non-CONNECT; retain to avoid release by SimpleChannelInboundHandler

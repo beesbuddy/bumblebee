@@ -108,31 +108,44 @@
   (let [parsed (js/parseInt v 10)]
     (if (js/isNaN parsed) default-val parsed)))
 
-(defn client-form-input [{:keys [label type value on-change placeholder step min max]}]
-  ($ :label {:className "flex flex-col text-sm gap-1"}
-     ($ :span {:className "font-medium text-slate-600"} label)
-     ($ :input (cond-> {:className "border rounded px-3 py-2"
+(defn sanitize-qos [value]
+  (-> (ensure-number value 0)
+      (max 0)
+      (min 2)))
+
+(defn client-form-input [{:keys [label type value on-change placeholder step min max disabled?]}]
+  ($ :div {:className "form-control w-full"}
+     ($ :label {:className "label"}
+        ($ :span {:className "label-text font-medium text-amber-900"} label))
+     ($ :input (cond-> {:className "input input-bordered input-warning input-sm bg-amber-50 border border-amber-300 focus:outline-none focus:ring-2 focus:ring-warning/40 text-amber-900 placeholder:text-amber-900/50"
                         :type (or type "text")
                         :value (or value "")
                         :onChange on-change
-                        :placeholder placeholder}
+                        :placeholder placeholder
+                        :disabled disabled?}
                  step (assoc :step step)
                  min (assoc :min min)
                  max (assoc :max max)))))
 
 (defn client-action-buttons [{:keys [connected? on-connect on-disconnect label connecting?]}]
-  ($ :div {:className "flex gap-3"}
-     ($ :button {:className (str "px-3 py-1 rounded border"
-                                 (if connected?
-                                   " bg-green-600 text-white border-green-600"
-                                   " bg-slate-100"))
+  ($ :div {:className "flex flex-wrap gap-3"}
+     ($ :button {:className (str "btn btn-sm "
+                                 (cond
+                                   connected? "btn-success"
+                                   connecting? "btn-warning"
+                                   :else "btn-warning"))
                  :disabled (or connected? connecting?)
                  :onClick on-connect}
+        (when connecting?
+          ($ :span {:className "loading loading-spinner loading-xs"} ""))
         (cond
           connected? "Connected"
           connecting? "Connecting..."
           :else (str "Connect " label)))
-     ($ :button {:className "px-3 py-1 rounded border"
+     ($ :button {:className (str "btn btn-sm "
+                                 (if connected?
+                                   "btn-outline btn-error"
+                                   "btn-outline btn-error opacity-60 pointer-events-none"))
                  :disabled (not connected?)
                  :onClick on-disconnect}
         "Disconnect")))
@@ -143,6 +156,12 @@
                 (fn [err]
                   (cb err)))))
 
+(defn unsubscribe-client! [client topic cb]
+  (when client
+    (.unsubscribe client topic
+                  (fn [err]
+                    (cb err)))))
+
 (defn publish-message! [client {:keys [topic message qos retain]} cb]
   (when client
     (.publish client topic message (clj->js {:qos qos :retain retain})
@@ -151,49 +170,99 @@
 
 (def max-log-entries 200)
 
+(def ^:private retry-delay-sequence [1000 2000 5000])
+
+(def ^:private status-badge-styles
+  {:connected {:label "Connected" :class "badge badge-success badge-sm gap-2"}
+   :connecting {:label "Connecting" :class "badge badge-warning badge-sm gap-2"}
+   :closing {:label "Closing" :class "badge badge-warning badge-sm gap-2"}
+   :error {:label "Error" :class "badge badge-error badge-sm gap-2"}
+   :disconnected {:label "Disconnected" :class "badge badge-outline badge-sm gap-2 border-amber-300 text-amber-900"}
+   :idle {:label "Idle" :class "badge badge-outline badge-sm gap-2 border-amber-200 text-amber-900/80"}})
+
+(defn next-retry-delay [attempt]
+  (let [base-count (count retry-delay-sequence)]
+    (cond
+      (< attempt 2) 0
+      (<= attempt (inc base-count))
+      (nth retry-delay-sequence (- attempt 2))
+      :else (let [overflow (- attempt (inc base-count))
+                  last-delay (last retry-delay-sequence)]
+              (* last-delay (js/Math.pow 2 overflow))))))
+
+(defn reset-retry-state!
+  ([retry-ref] (reset-retry-state! retry-ref {:closing? false}))
+  ([retry-ref {:keys [closing?] :or {closing? false}}]
+   (when-let [timer (:timer @retry-ref)]
+     (js/clearTimeout timer))
+   (reset! retry-ref {:attempt 0 :timer nil :closing? closing?})))
+
+(defui status-badge [{:keys [status retrying?]}]
+  (let [{:keys [label class]} (get status-badge-styles (or status :idle) (get status-badge-styles :idle))]
+    ($ :span {:className class}
+       label
+       (when retrying?
+         ($ :span {:className "loading loading-spinner loading-xs ml-1"} "")))))
+
 (defui heading []
-  ($ :div {:className "space-y-8"}
-     ($ :div {:className "space-y-2"}
-        ($ :h1 {:className "text-3xl font-bold"} "MQTT Test Lab")
-        ($ :p {:className "text-slate-600"}
-           "Create publisher and subscriber clients, then publish test messages."))))
+  ($ :section {:className "rounded-3xl border border-amber-200/70 bg-gradient-to-br from-amber-100 via-amber-50 to-amber-100 p-6 shadow-sm"}
+     ($ :div {:className "flex flex-col gap-6 md:flex-row md:items-center md:justify-between"}
+        ($ :div {:className "space-y-4"}
+           ($ :h1 {:className "text-4xl font-black text-amber-900"}
+              "MQTT Test Lab")
+           ($ :p {:className "max-w-2xl text-base leading-relaxed text-amber-900/80"}
+              "Spin up twin MQTT clients, validate broker connectivity, and inspect payloads in real time. Configure WebSocket endpoints, subscribe to topics, and publish messages without leaving the dashboard."))
+        ($ :div {:className "flex flex-wrap gap-2"}
+           ($ :span {:className "badge badge-warning badge-outline badge-lg"} "WebSocket only")
+           ($ :span {:className "badge badge-info badge-outline badge-lg"} "Dual client simulator")
+           ($ :span {:className "badge badge-success badge-outline badge-lg"} "Live activity log")))))
 
 (defn checkbox-input [{:keys [label checked? on-change hint disabled?]}]
-  (let [class-name (cond-> "flex items-center gap-2 text-sm"
-                     disabled? (str " text-slate-400"))]
-    ($ :label {:className class-name}
-       ($ :input {:type "checkbox"
-                  :checked (boolean checked?)
-                  :onChange on-change
-                  :disabled disabled?})
-       ($ :span {:className "font-medium text-slate-600"} label)
-       (when hint
-         ($ :span {:className "text-xs text-slate-500"} hint)))))
+  ($ :div {:className "form-control"}
+     ($ :label {:className (str "label cursor-pointer justify-start gap-3 "
+                                (when disabled? "opacity-60"))}
+        ($ :input {:type "checkbox"
+                   :checked (boolean checked?)
+                   :className "checkbox checkbox-warning"
+                   :onChange on-change
+                   :disabled disabled?})
+        ($ :span {:className "label-text font-medium text-amber-900"} label))
+     (when hint
+       ($ :span {:className "label-text-alt text-xs text-amber-900/60"} hint))))
 
 (defn text-area-input [{:keys [label value on-change placeholder rows]}]
-  ($ :label {:className "flex flex-col text-sm gap-1"}
-     ($ :span {:className "font-medium text-slate-600"} label)
-     ($ :textarea (cond-> {:className "border rounded px-3 py-2 font-mono text-sm"
+  ($ :div {:className "form-control w-full"}
+     ($ :label {:className "label"}
+        ($ :span {:className "label-text font-medium text-amber-900"} label))
+     ($ :textarea (cond-> {:className "textarea textarea-bordered textarea-warning textarea-sm font-mono leading-relaxed bg-amber-50 border border-amber-300 focus:outline-none focus:ring-2 focus:ring-warning/40 text-amber-900 placeholder:text-amber-900/50"
                            :value (or value "")
                            :onChange on-change
                            :placeholder placeholder}
                     rows (assoc :rows rows)))))
 
-(defui client-card [{:keys [title state body footer]}]
-  ($ :div {:className "border rounded-lg p-4 space-y-4"}
-     ($ :div {:className "flex items-center justify-between"}
-        ($ :h2 {:className "text-xl font-semibold"} title)
-        ($ :span {:className "text-xs text-slate-500"} (format-status state)))
-     body
-     (when footer footer)))
+(defui client-card [{:keys [title state body footer description]}]
+  ($ :div {:className "card bg-amber-50 border border-amber-200 shadow-sm"}
+     ($ :div {:className "card-body space-y-6"}
+        ($ :div {:className "flex items-start justify-between gap-4"}
+           ($ :div {:className "space-y-1"}
+              ($ :h2 {:className "text-2xl font-semibold text-amber-900"} title)
+              (when description
+                ($ :p {:className "text-sm text-amber-900/70"} description)))
+           ($ :div {:className "flex flex-col items-end gap-1 text-amber-900"}
+              ($ status-badge state)
+              ($ :span {:className "text-xs text-amber-900/60 max-w-[220px] text-right leading-tight"}
+                 (format-status state))))
+        body
+        (when footer
+          ($ :div {:className "pt-2 border-t border-amber-200"} footer)))))
 
 (defui client-connection-form
   [{:keys [config set-config state label on-connect on-disconnect]}]
   (let [connected? (= :connected (:status state))
         connecting? (or (= :connecting (:status state))
                         (:retrying? state))]
-    ($ :div {:className "space-y-4"}
-       ($ :div {:className "grid gap-3 sm:grid-cols-2"}
+    ($ :div {:className "space-y-6"}
+       ($ :div {:className "grid gap-4 md:grid-cols-2"}
           (client-form-input {:label "Host"
                               :value (:host config)
                               :on-change (fn [e]
@@ -259,14 +328,14 @@
                                      :label label
                                      :on-connect on-connect
                                      :on-disconnect on-disconnect})))
-       ($ :p {:className "text-xs text-slate-500"}
+       ($ :p {:className "text-xs text-amber-900/60"}
           "Connections use WebSocket transport; MQTT/TCP fallback is not supported."))))
 
 (defui subscriber-subscription-form
-  [{:keys [form set-form on-subscribe connected? clear-error!]}]
-  ($ :div {:className "space-y-3"}
-     ($ :h3 {:className "text-lg font-semibold"} "Subscription")
-     ($ :div {:className "grid gap-3 sm:grid-cols-2"}
+  [{:keys [form set-form on-subscribe on-unsubscribe connected? clear-error!]}]
+  ($ :div {:className "space-y-4"}
+     ($ :h3 {:className "text-xl font-semibold text-amber-900"} "Subscription")
+     ($ :div {:className "grid gap-4 md:grid-cols-2"}
         (client-form-input {:label "Topic"
                             :value (:topic form)
                             :on-change (fn [e]
@@ -281,56 +350,68 @@
                             :value (:qos form)
                             :on-change (fn [e]
                                          (let [v (.. e -target -value)
-                                               qos (-> (ensure-number v 0)
-                                                       (max 0)
-                                                       (min 2))]
+                                               qos (sanitize-qos v)]
                                            (clear-error!)
                                            (set-form #(assoc % :qos qos))))})
-        ($ :div {:className "sm:col-span-2 flex items-center gap-3"}
-           ($ :button {:className (str "px-3 py-1 rounded border"
-                                       (if connected?
-                                         " bg-sky-600 text-white border-sky-600"
-                                         " bg-slate-100"))
+        ($ :div {:className "sm:col-span-2 flex flex-wrap items-center gap-3"}
+           ($ :button {:className "btn btn-sm btn-warning"
                        :disabled (not connected?)
                        :onClick on-subscribe}
               "Subscribe")
-           ($ :span {:className "text-xs text-slate-500"}
+           ($ :button {:className "btn btn-sm btn-outline btn-error"
+                       :disabled (or (not connected?) (str/blank? (:topic form)))
+                       :onClick (fn [e]
+                                  (.preventDefault e)
+                                  (when on-unsubscribe
+                                    (on-unsubscribe)))}
+              "Unsubscribe")
+           ($ :span {:className "text-xs text-amber-900/60"}
               (if connected?
                 "Subscribe the connected client to the topic above."
                 "Connect before subscribing."))))))
 
-(defui subscriber-subscriptions-panel [{:keys [subscriptions]}]
-  ($ :div {:className "space-y-2"}
-     ($ :h3 {:className "text-lg font-semibold"} "Active Subscriptions")
+(defui subscriber-subscriptions-panel [{:keys [subscriptions on-unsubscribe connected?]}]
+  ($ :div {:className "space-y-3"}
+     ($ :h3 {:className "text-xl font-semibold text-amber-900"} "Active Subscriptions")
      (if (seq subscriptions)
-       ($ :ul {:className "list-disc list-inside text-sm text-slate-600 space-y-1"}
+       ($ :div {:className "flex flex-wrap gap-2"}
           (for [topic (sort subscriptions)]
-            ($ :li {:key topic} topic)))
-       ($ :p {:className "text-sm text-slate-500 italic"}
+            ($ :div {:key topic
+                     :className "flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm text-amber-900"}
+               ($ :span {:className "font-medium"} topic)
+               (when on-unsubscribe
+                 ($ :button {:className "btn btn-ghost btn-xs text-amber-900 hover:text-error"
+                             :title "Unsubscribe"
+                             :disabled (not connected?)
+                             :onClick #(on-unsubscribe topic)}
+                    "x")))))
+       ($ :p {:className "text-sm text-amber-900/60 italic"}
           "No topics subscribed yet."))))
 
 (defui subscriber-messages-panel [{:keys [messages]}]
-  ($ :div {:className "space-y-2"}
-     ($ :h3 {:className "text-lg font-semibold"} "Message Log")
+  ($ :div {:className "space-y-4"}
+     ($ :h3 {:className "text-xl font-semibold text-amber-900"} "Message Log")
      (if (seq messages)
-       ($ :div {:className "max-h-64 overflow-y-auto border rounded-md bg-slate-50 divide-y"}
+       ($ :div {:className "max-h-64 overflow-y-auto rounded-xl border border-amber-200 bg-amber-50/80 divide-y divide-amber-200/70"}
           (for [{:keys [topic payload qos timestamp]} (reverse messages)]
             (let [key (str timestamp "-" topic "-" (hash payload))]
-              ($ :div {:key key :className "p-3 space-y-1 text-sm"}
-                 ($ :div {:className "flex items-center justify-between text-xs text-slate-500"}
-                    ($ :span (str (or timestamp "") " • " topic))
-                    ($ :span (str "QoS " (or qos 0))))
-                 ($ :pre {:className "whitespace-pre-wrap break-words font-mono text-sm"}
+              ($ :div {:key key :className "p-3 space-y-2 text-sm text-amber-900"}
+                 ($ :div {:className "flex items-center justify-between text-xs text-amber-900/60"}
+                    ($ :span (or timestamp ""))
+                    ($ :span {:className "badge badge-warning badge-outline badge-xs"} (str "QoS " (or qos 0))))
+                 ($ :div {:className "flex flex-wrap items-center gap-2 text-xs text-amber-900/70"}
+                    ($ :span {:className "badge badge-outline badge-xs border-amber-300 text-amber-900"} topic))
+                 ($ :pre {:className "whitespace-pre-wrap break-words rounded-lg bg-amber-100/80 p-3 font-mono text-sm text-amber-900"}
                     (or payload ""))))))
-       ($ :p {:className "text-sm text-slate-500 italic"}
+       ($ :p {:className "text-sm text-amber-900/60 italic"}
           "No messages received yet."))))
 
 (defui publisher-publish-form
   [{:keys [form set-form on-publish status connected? clear-status!]}]
   (let [{:keys [pending? error ok?]} status]
-    ($ :div {:className "space-y-3"}
-       ($ :h3 {:className "text-lg font-semibold"} "Publish Message")
-       ($ :div {:className "grid gap-3 sm:grid-cols-2"}
+    ($ :div {:className "space-y-4"}
+       ($ :h3 {:className "text-xl font-semibold text-amber-900"} "Publish Message")
+       ($ :div {:className "grid gap-4 md:grid-cols-2"}
           (client-form-input {:label "Topic"
                               :value (:topic form)
                               :on-change (fn [e]
@@ -345,9 +426,7 @@
                               :value (:qos form)
                               :on-change (fn [e]
                                            (let [v (.. e -target -value)
-                                                 qos (-> (ensure-number v 0)
-                                                         (max 0)
-                                                         (min 2))]
+                                                 qos (sanitize-qos v)]
                                              (clear-status!)
                                              (set-form #(assoc % :qos qos))))})
           ($ :div {:className "sm:col-span-2"}
@@ -356,10 +435,10 @@
                                :value (:message form)
                                :on-change (fn [e]
                                             (let [v (.. e -target -value)]
-                                              (clear-status!)
-                                              (set-form #(assoc % :message v))))
+                                             (clear-status!)
+                                             (set-form #(assoc % :message v))))
                                :placeholder "Enter the payload to publish"}))
-          ($ :div {:className "sm:col-span-2 flex items-center justify-between gap-3"}
+          ($ :div {:className "sm:col-span-2 flex flex-wrap items-center justify-between gap-3"}
              (checkbox-input {:label "Retain message?"
                               :checked? (:retain form)
                               :on-change (fn [e]
@@ -367,52 +446,57 @@
                                              (clear-status!)
                                              (set-form #(assoc % :retain v))))
                               :disabled? (not connected?)})
-             ($ :button {:className (str "px-3 py-1 rounded border"
+             ($ :button {:className (str "btn btn-sm "
                                          (cond
-                                           pending? " bg-slate-100 border-slate-200 text-slate-500"
-                                           connected? " bg-emerald-600 text-white border-emerald-600"
-                                           :else " bg-slate-100"))
+                                           pending? "btn-warning"
+                                           connected? "btn-success"
+                                           :else "btn-warning"))
                          :disabled (or (not connected?) pending?)
                          :onClick on-publish}
+                (when pending?
+                  ($ :span {:className "loading loading-spinner loading-xs"} ""))
                 (cond
                   pending? "Publishing..."
                   connected? "Publish"
                   :else "Publish"))))
        (cond
-         pending? ($ :div {:className "text-sm text-slate-500"} "Publishing message…")
-         error ($ :div {:className "text-sm text-red-600"} error)
-         ok? ($ :div {:className "text-sm text-green-600"} "Message published successfully.")))))
+         pending? ($ :div {:className "alert alert-warning py-2 text-sm"} "Publishing message…")
+         error ($ :div {:className "alert alert-error py-2 text-sm"} error)
+         ok? ($ :div {:className "alert alert-warning py-2 text-sm"} "Message published successfully.")))))
 
 (defui connection-log-panel [{:keys [entries]}]
-  ($ :div {:className "border rounded-lg p-4 space-y-3"}
-     ($ :div {:className "flex items-center justify-between"}
-        ($ :h2 {:className "text-xl font-semibold"} "Connection Log")
-        ($ :span {:className "text-xs text-slate-500"}
-           (let [cnt (count entries)]
-             (str cnt " event" (when (not= 1 cnt) "s")))))
-     (if (seq entries)
-       ($ :ul {:className "space-y-2 text-sm text-slate-600"}
-          (for [{:keys [ts event target transport url message]} (reverse entries)]
-            (let [key (str ts "-" event "-" target "-" (or transport "none"))
-                  transport-label (when transport (str/capitalize transport))]
-              ($ :li {:key key :className "border rounded px-3 py-2 bg-slate-50 space-y-1"}
-                 ($ :div {:className "flex items-center justify-between text-xs text-slate-500"}
-                    ($ :span ts)
-                    ($ :span (str (str/capitalize target) " • " (str/capitalize event))))
-                 (when transport-label
-                   ($ :div (str "Transport: " transport-label)))
-                 (when (seq url)
-                   ($ :div (str "URL: " url)))
-                 (when (seq message)
-                   ($ :div (str "Message: " message)))))))
-       ($ :p {:className "text-sm text-slate-500 italic"}
-          "Connect a client to populate the log."))))
+  ($ :div {:className "card bg-amber-50 border border-amber-200 shadow-sm"}
+     ($ :div {:className "card-body space-y-4"}
+        ($ :div {:className "flex items-center justify-between"}
+           ($ :h2 {:className "text-2xl font-semibold text-amber-900"} "Connection Log")
+           ($ :span {:className "text-xs text-amber-900/60"}
+              (let [cnt (count entries)]
+                (str cnt " event" (when (not= 1 cnt) "s")))))
+        (if (seq entries)
+          ($ :ul {:className "space-y-3 text-sm text-amber-900/80"}
+             (for [{:keys [ts event target transport url message]} (reverse entries)]
+               (let [key (str ts "-" event "-" target "-" (or transport "none"))
+                     transport-label (when transport (str/capitalize transport))]
+                 ($ :li {:key key :className "rounded-xl border border-amber-200 bg-amber-100/80 p-3 space-y-2"}
+                    ($ :div {:className "flex items-center justify-between text-xs text-amber-900/60"}
+                       ($ :span ts)
+                       ($ :span {:className "badge badge-warning badge-outline badge-xs"}
+                          (str (str/capitalize target) " • " (str/capitalize event))))
+                    (when transport-label
+                      ($ :div {:className "text-xs text-amber-900/70"} (str "Transport: " transport-label)))
+                    (when (seq url)
+                      ($ :div {:className "text-xs break-all text-amber-900/70"} (str "URL: " url)))
+                    (when (seq message)
+                      ($ :div {:className "text-xs text-amber-900/70"} (str "Message: " message)))))))
+          ($ :p {:className "text-sm text-amber-900/60 italic"}
+             "Connect a client to populate the log.")))))
 
 (defui subscriber-section
-  [{:keys [config set-config state on-connect on-disconnect form set-form on-subscribe subscriptions messages clear-error!]}]
+  [{:keys [config set-config state on-connect on-disconnect form set-form on-subscribe on-unsubscribe subscriptions messages clear-error!]}]
   (let [connected? (= :connected (:status state))]
     ($ client-card
        {:title "Subscriber Client"
+        :description "Monitor subscriptions and inspect incoming payloads."
         :state state
         :body ($ :div {:className "space-y-6"}
                  ($ client-connection-form {:config config
@@ -424,11 +508,14 @@
                  ($ subscriber-subscription-form {:form form
                                                   :set-form set-form
                                                   :on-subscribe on-subscribe
+                                                  :on-unsubscribe on-unsubscribe
                                                   :connected? connected?
                                                   :clear-error! clear-error!})
-                 ($ subscriber-subscriptions-panel {:subscriptions subscriptions})
+                 ($ subscriber-subscriptions-panel {:subscriptions subscriptions
+                                                    :on-unsubscribe on-unsubscribe
+                                                    :connected? connected?})
                  (when-let [err (:error state)]
-                   ($ :div {:className "text-sm text-red-600"} err))
+                   ($ :div {:className "alert alert-error py-2 text-sm"} err))
                  ($ subscriber-messages-panel {:messages messages}))})))
 
 (defui publisher-section
@@ -436,6 +523,7 @@
   (let [connected? (= :connected (:status state))]
     ($ client-card
        {:title "Publisher Client"
+        :description "Send test payloads to your broker to verify routing and QoS."
         :state state
         :body ($ :div {:className "space-y-6"}
                  ($ client-connection-form {:config config
@@ -471,14 +559,9 @@
                           :publisher pub-retry-state
                           :subscriber sub-retry-state))
         clear-retry-state!
-        (letfn [(clear-retry-state!*
-                  ([target] (clear-retry-state!* target {:closing? false}))
-                  ([target {:keys [closing?] :or {closing? false}}]
-                   (let [ref (retry-ref-for target)]
-                     (when-let [timer (:timer @ref)]
-                       (js/clearTimeout timer))
-                     (reset! ref {:attempt 0 :timer nil :closing? closing?}))))]
-          clear-retry-state!*)]
+        (fn [target & [opts]]
+          (let [{:keys [closing?] :or {closing? false}} (or opts {})]
+            (reset-retry-state! (retry-ref-for target) {:closing? closing?})))]
 
     (use-effect
      (fn []
@@ -489,12 +572,8 @@
          (when-let [client @sub-client]
            (stop-client! client)
            (reset! sub-client nil))
-         (when-let [timer (:timer @pub-retry-state)]
-           (js/clearTimeout timer))
-         (reset! pub-retry-state {:attempt 0 :timer nil :closing? false})
-         (when-let [timer (:timer @sub-retry-state)]
-           (js/clearTimeout timer))
-         (reset! sub-retry-state {:attempt 0 :timer nil :closing? false})
+         (reset-retry-state! pub-retry-state)
+         (reset-retry-state! sub-retry-state)
          (set-messages [])
          (set-subscriptions #{})))
      [])
@@ -561,7 +640,7 @@
           (letfn [(do-subscribe [form {:keys [suppress-blank?] :or {suppress-blank? false}}]
                     (let [form (or form {})
                           topic (if (contains? form :topic) (:topic form) (:topic sub-form))
-                          qos (if (contains? form :qos) (:qos form) (:qos sub-form))
+                          qos (sanitize-qos (if (contains? form :qos) (:qos form) (:qos sub-form)))
                           client @sub-client]
                       (set-sub-state (fn [s] (assoc s :error nil)))
                       (cond
@@ -588,11 +667,41 @@
             (fn
               ([form] (do-subscribe form {}))
               ([form opts] (do-subscribe form opts))))
+          unsubscribe-topic!
+          (letfn [(do-unsubscribe [form {:keys [suppress-blank?] :or {suppress-blank? false}}]
+                    (let [form (or form {})
+                          topic (if (contains? form :topic) (:topic form) (:topic sub-form))
+                          client @sub-client]
+                      (set-sub-state (fn [s] (assoc s :error nil)))
+                      (cond
+                        (str/blank? topic)
+                        (when-not suppress-blank?
+                          (set-sub-state (fn [s] (assoc s :error "Topic required"))))
+                        (nil? client)
+                        (set-sub-state (fn [s] (assoc s :error "Subscriber client is not connected")))
+                        :else
+                        (unsubscribe-client! client topic
+                                             (fn [err]
+                                               (if err
+                                                 (let [msg (cond
+                                                             (instance? js/Error err) (.-message err)
+                                                             (string? err) err
+                                                             :else (str err))]
+                                                   (set-sub-state (fn [s] (assoc s :error msg))))
+                                                 (do
+                                                   (set-subscriptions #(disj % topic))
+                                                   (set-sub-state (fn [s] (assoc s :error nil)))
+                                                   (update-log! {:event "unsubscribed"
+                                                                 :target "subscriber"
+                                                                 :message (str "topic=" topic)}))))))))]
+            (fn
+              ([form] (do-unsubscribe form {}))
+              ([form opts] (do-unsubscribe form opts))))
           publish-topic! (fn [form]
                            (let [form (or form {})
                                  topic (if (contains? form :topic) (:topic form) (:topic pub-form))
                                  message (if (contains? form :message) (:message form) (:message pub-form))
-                                 qos (if (contains? form :qos) (:qos form) (:qos pub-form))
+                                 qos (sanitize-qos (if (contains? form :qos) (:qos form) (:qos pub-form)))
                                  retain (if (contains? form :retain) (:retain form) (:retain pub-form))
                                  client @pub-client]
                              (cond
@@ -630,18 +739,7 @@
                                                  :subscriber set-sub-state)
                                   retry-ref (retry-ref-for target)
                                   max-attempts 3]
-                              (letfn [(retry-delay-ms [next-attempt]
-                                        (let [base-delays [1000 2000 5000]
-                                              base-count (count base-delays)]
-                                          (cond
-                                            (< next-attempt 2) 0
-                                            (<= next-attempt (inc base-count))
-                                            (nth base-delays (- next-attempt 2))
-                                            :else (let [overflow (- next-attempt (inc base-count))
-                                                        last-delay (last base-delays)]
-                                                    (* last-delay
-                                                       (js/Math.pow 2 overflow))))))
-                                      (clear-timer! []
+                              (letfn [(clear-timer! []
                                         (when-let [id (:timer @retry-ref)]
                                           (js/clearTimeout id))
                                         (swap! retry-ref assoc :timer nil))
@@ -696,7 +794,7 @@
                                                           :target (name target)
                                                           :message (str "attempts=" attempt " exhausted")}))
                                           (let [next-attempt (inc attempt)
-                                                delay-ms (js/Math.round (retry-delay-ms next-attempt))
+                                                delay-ms (js/Math.round (next-retry-delay next-attempt))
                                                 existing (:timer @retry-ref)
                                                 message (if (seq last-error)
                                                           (str last-error " — retrying in " delay-ms "ms (attempt "
@@ -727,9 +825,9 @@
           clear-sub-error! #(set-sub-state (fn [s] (assoc s :error nil)))
           clear-publish-status! #(set-publish-status (fn [s] (assoc s :error nil :ok? false)))]
 
-      ($ :div {:className "space-y-6"}
+      ($ :div {:className "space-y-10 pb-10"}
          (heading)
-         ($ :div {:className "grid gap-6 lg:grid-cols-2"}
+         ($ :div {:className "grid gap-8 lg:grid-cols-2 xl:gap-10"}
             ($ subscriber-section {:config sub-config
                                    :set-config set-sub-config
                                    :state sub-state
@@ -740,6 +838,9 @@
                                    :form sub-form
                                    :set-form set-sub-form
                                    :on-subscribe (fn [] (subscribe-topic! sub-form))
+                                   :on-unsubscribe (fn
+                                                     ([] (unsubscribe-topic! sub-form))
+                                                     ([topic] (unsubscribe-topic! {:topic topic} {:suppress-blank? true})))
                                    :subscriptions subscriptions
                                    :messages messages
                                    :clear-error! clear-sub-error!})
