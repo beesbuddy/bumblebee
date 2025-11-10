@@ -7,7 +7,7 @@
   [["/" {:name :home}]
    ["/about" {:name :about}]
    ["/admin" {:name :admin :requires-auth true}]
-   ["/mqtt-lab" {:name :mqtt-lab}]
+   ["/mqtt-lab" {:name :mqtt-lab :requires-auth true}]
    ["/login" {:name :login}]])
 
 (def router (rf/router routes))

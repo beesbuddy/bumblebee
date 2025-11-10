@@ -60,13 +60,23 @@
   (merge {:login "Sign in"}
          (into {} (map (juxt :route :label) nav-items))))
 
+(def ^:private sidebar-toggle-button-class
+  "btn btn-circle bg-amber-200 text-amber-900 border border-amber-300 hover:bg-amber-200/80 hover:border-amber-400 focus-visible:border-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 transition-colors duration-150")
+
+(def ^:private sidebar-nav-link-class
+  "is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:tooltip-warning hover:bg-amber-200 focus-visible:bg-amber-200 active:bg-amber-300 active:text-amber-900 text-amber-800 transition-colors duration-150 rounded-lg pl-2 pr-3 flex items-center justify-center gap-3 w-full is-drawer-close:border-transparent is-drawer-close:outline-none is-drawer-close:focus-visible:outline-none is-drawer-close:focus-visible:ring-0 is-drawer-close:bg-transparent is-drawer-close:hover:bg-transparent is-drawer-close:focus-visible:bg-transparent is-drawer-close:active:bg-transparent")
+
+(def ^:private sidebar-nav-link-active-class
+  " bg-amber-200/80 text-amber-900 shadow-inner is-drawer-close:bg-transparent is-drawer-close:text-amber-800 is-drawer-close:shadow-none")
+
+(def ^:private sidebar-nav-icon-class
+  "grid h-10 w-10 place-items-center rounded-lg bg-amber-50 text-amber-700 transition-colors duration-150 hover:bg-amber-200 hover:text-amber-800 focus-visible:bg-amber-200 focus-visible:text-amber-900 active:bg-amber-300 active:text-amber-900 is-drawer-close:border-none is-drawer-close:outline-none is-drawer-close:focus-visible:outline-none is-drawer-close:focus-visible:ring-0")
+
 (defn- nav-link [{:keys [route label icon preload]} current-route set-drawer-open]
   (let [active? (= current-route route)
         href (router/href route)
         tooltip label
-        base "is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:tooltip-warning hover:bg-amber-200 focus-visible:bg-amber-200 active:bg-amber-300 active:text-amber-900 text-amber-800 transition-colors duration-150 rounded-lg pl-2 pr-3 flex items-center justify-center gap-3 w-full"
-        active (when active? " bg-amber-200/80 text-amber-900 shadow-inner")
-        icon-base "grid h-10 w-10 place-items-center rounded-lg bg-amber-50 text-amber-700 transition-colors duration-150 hover:bg-amber-200 hover:text-amber-800 focus-visible:bg-amber-200 focus-visible:text-amber-900 active:bg-amber-300 active:text-amber-900"
+        active-class (when active? sidebar-nav-link-active-class)
         icon-active (when active? " bg-amber-300 text-amber-900 shadow")
         icon-el (when icon (icon))]
     ($ :li {:key (name route)}
@@ -74,9 +84,8 @@
               :data-tip tooltip
               :aria-current (when active? "page")
               :onMouseEnter (fn [] (when preload (preload)))
-              :onClick (fn [_] (set-drawer-open false))
-              :className (str base active)}
-          ($ :span {:className (str icon-base icon-active)}
+              :className (str sidebar-nav-link-class active-class)}
+          ($ :span {:className (str sidebar-nav-icon-class icon-active)}
              icon-el)
           ($ :span {:className "is-drawer-close:hidden flex-1 text-left font-medium"}
              label)))))
@@ -85,11 +94,6 @@
         current-route (get-in route [:data :name])
         page-title (or (get route->title current-route) "Operations Dashboard")
         route-badge (some-> current-route name (str/replace "-" " ") str/capitalize)]
-    (use-effect
-      (fn []
-        (set-drawer-open false)
-        js/undefined)
-      [current-route])
     ($ :div {:data-theme "bumblebee"
              :className "drawer lg:drawer-open min-h-screen bg-amber-50 text-amber-900"}
        ($ :input {:id drawer-id
@@ -196,7 +200,12 @@
                          ($ :span {:className "text-sm font-semibold"} "OP"))))
                 ($ :label {:htmlFor drawer-id
                            :data-tip "Toggle sidebar"
-                           :className "btn btn-circle btn-warning text-amber-900 flex items-center justify-center drawer-button is-drawer-open:rotate-y-180 is-drawer-close:tooltip is-drawer-close:tooltip-right"}
+                           :className (str sidebar-toggle-button-class
+                                           " flex items-center justify-center drawer-button "
+                                           "is-drawer-open:rotate-y-180 "
+                                           "is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:tooltip-warning "
+                                           "is-drawer-close:border-transparent is-drawer-close:outline-none "
+                                           "is-drawer-close:focus-visible:outline-none is-drawer-close:focus-visible:ring-0")}
                    ($ :svg {:xmlns "http://www.w3.org/2000/svg"
                             :viewBox "0 0 24 24"
                             :className "h-5 w-5"
